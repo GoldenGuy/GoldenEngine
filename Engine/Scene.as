@@ -1,0 +1,107 @@
+
+class Scene
+{
+	Camera camera;
+	Entity@[] entities;
+	uint[] update_transforms;
+	ITickable@[] tickables;
+	IRenderable@[] renderables; // make a custom class instead
+	PhysicsScene physics_scene;
+
+	dictionary data;
+
+	void PreInit()
+	{
+		entities.clear();
+		tickables.clear();
+		renderables.clear();
+
+		camera = Camera(this);
+		physics_scene = PhysicsScene(this);
+	}
+
+	void Init()
+	{
+		for(uint i = 0; i < entities.size(); i++)
+		{
+			entities[i].Init();
+		}
+	}
+
+	void Tick()
+	{
+		for(int i = 0; i < update_transforms.size(); i++)
+		{
+			entities[update_transforms[i]].UpdateTransforms();
+		}
+		update_transforms.clear();
+
+		physics_scene.Tick();
+
+		for(uint i = 0; i < tickables.size(); i++)
+		{
+			tickables[i].Tick();
+		}
+	}
+
+	void Render()
+	{
+		Render::ClearZ();
+		Render::SetZBuffer(true, true);
+		Render::SetAlphaBlend(false);
+		Render::SetBackfaceCull(true);
+		Render::SetAmbientLight(color_white);
+
+		float[] proj;
+		Matrix::MakePerspective(proj, dtr(75), float(getScreenWidth())/float(getScreenHeight()), 0.01f, 400.0f);
+		Render::SetProjectionTransform(proj);
+
+		Render::SetViewTransform(camera.getViewMatrix());
+
+		physics_scene.DebugDraw();
+
+		//Render::SetFog(color_black, SMesh::LINEAR, 0, 200, 0.5, true, true);
+
+		for(uint i = 0; i < renderables.size(); i++)
+		{
+			renderables[i].Render();
+		}
+	}
+
+	Entity@ CreateEntity(string name)
+	{
+		Entity entity = Entity(name, this);
+		entity.id = entities.size();
+		entities.push_back(@entity);
+		return @entity;
+	}
+
+	void UpdateTransforms(Entity@ entity)
+	{
+		update_transforms.push_back(entity.id);
+	}
+
+	void AddComponent(Component@ component)
+	{
+		ITickable@ tickable = cast<ITickable>(component);
+		if(tickable !is null)
+		{
+			tickables.push_back(tickable);
+			return;
+		}
+
+		IRenderable@ renderable = cast<IRenderable>(component);
+		if(renderable !is null)
+		{
+			renderables.push_back(renderable);
+			return;
+		}
+
+		Physical@ physical = cast<Physical>(component);
+		if(physical !is null)
+		{
+			physics_scene.AddPhysicsBody(physical);
+			return;
+		}
+	}
+}
