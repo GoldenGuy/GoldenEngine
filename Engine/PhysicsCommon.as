@@ -1,6 +1,8 @@
 
 #include "PhysicsScene.as"
 
+const int DYNAMIC_ITERATIONS = 5;
+
 enum BodyType
 {
     STATIC,
@@ -27,7 +29,8 @@ class CollisionData
     Vec3f vel;
 	Vec3f intersect_point;
 	Vec3f intersect_normal;
-	float t; // time of collision
+    Vec3f push_out;
+	float t; // time of collision 
 	//int collision_type; // 0 = triangle, 1 = point, 2 = edge
 
 	CollisionData(Vec3f _start_pos = Vec3f(), Vec3f _velocity = Vec3f())
@@ -38,6 +41,7 @@ class CollisionData
         vel = _velocity;
 		intersect_point = Vec3f();
 		intersect_normal = Vec3f();
+        push_out = Vec3f();
 		t = 1.0f;
 		//collision_type = -1;
 	}
@@ -116,6 +120,11 @@ class SphereBody : ColliderBody
                     data.intersect_point *= radius;
                     //data.intersect_normal *= radius;
                 }
+                if(data.inside)
+                {
+                    data.push_out *= radius;
+                    data.push_out.Normalize();
+                }
                 data.start_pos *= radius;
                 data.vel *= radius;
                 //SphereMeshCollision(this, other_mesh, data);
@@ -130,6 +139,11 @@ class SphereBody : ColliderBody
                 if(data.intersect)
                 {
                     data.intersect_point *= radius;
+                }
+                if(data.inside)
+                {
+                    data.push_out *= radius;
+                    data.push_out.Normalize();
                 }
                 data.start_pos *= radius;
                 data.vel *= radius;
@@ -463,10 +477,11 @@ void RaySphereCollision(CollisionData@ data, float sphere_radius)
     Vec3f oc = data.start_pos;
     if(oc.Length() < sphere_radius)
     {
-        data.intersect = true;
+        //data.intersect = false;
         data.inside = true;
-        data.t = (oc.Length() / sphere_radius)-1.0f;
-        data.intersect_point = Vec3f();
+        //data.t = (oc.Length() / sphere_radius)-1.0f;
+        //data.intersect_point = Vec3f();
+        data.push_out = data.start_pos.Normal();
         return;
     }
     float b = oc.Dot(data.vel.Normal());

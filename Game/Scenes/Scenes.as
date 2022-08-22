@@ -7,7 +7,7 @@ void CreateTestLevel(Scene@ scene)
         ent.AddComponent(RenderComponent());
         ent.AddComponent(DynamicBodyComponent(@scene.physics_scene, @SphereBody(1.0f)));
         //ent.AddComponent(MoveComponent());
-        ent.SetPositionImmediate(Vec3f((i-10)*0.5f,Maths::Abs(i%5)*0.5f,Maths::Abs(i%5)*1.5f));
+        ent.SetPositionImmediate(Vec3f((i-10)*0.5f,Maths::Abs(i%5)*1.5f,Maths::Abs(i%5)*1.5f));
     }
 
     /*{

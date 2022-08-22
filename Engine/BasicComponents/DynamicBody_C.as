@@ -23,12 +23,10 @@ class DynamicBodyComponent : Physical
 	{
 		ResolutionResult result = ResolutionResult();
 
-		//if(!grounded)
-			velocity += physics_scene.gravity_force;
+		bool do_push = false;
+		Vec3f push_amount = Vec3f();
 
 		grounded = false;
-
-		//velocity.y -= 0.002f;
 		
 		Vec3f pos = entity.transform.position;
 		Vec3f source_pos = pos;
@@ -44,13 +42,37 @@ class DynamicBodyComponent : Physical
 		while(!done)
 		{
 			stop++;
-			if(stop > 3)
+			if(stop > DYNAMIC_ITERATIONS)
 			{
-				//print("frick");
 				done = true;
 				break;
 			}
-			//print("vel.Length() "+vel.Length());
+			
+
+			// also keep track of what Physical we hit, if its trigger we remove it from colliders aray for next check and do -1 to stop counter
+			CollisionData data = CollisionData(pos, vel);
+			for(int i = 0; i < colliders.size(); i++)
+			{
+				Physical@ other = colliders[i];
+				CollisionData _data = data;
+				_data.start_pos -= other.entity.transform.position;
+				
+				body.Collide(@other.body, @_data);
+
+				if(_data.t < data.t)
+				{
+					data = _data;
+					data.start_pos += other.entity.transform.position;
+					data.intersect_point += other.entity.transform.position;
+				}
+
+				if(_data.inside)
+				{
+					do_push = true;
+					push_amount += _data.push_out;
+				}
+			}
+
 			if(vel.Length() < 0.001f)
 			{
 				dest = source_pos;
@@ -58,135 +80,88 @@ class DynamicBodyComponent : Physical
 				done = true;
 				break;
 			}
-			
-			CollisionData data = CollisionData(pos, vel);// = FindClosestIntersection(pos, vel);
-			for(int i = 0; i < colliders.size(); i++)
-			{
-				//if(colliders[i].physics_id == physics_id)
-				//	continue;
-				
-				Physical@ other = colliders[i];
-				CollisionData _data = data;
-				_data.start_pos -= other.entity.transform.position;
-				/*if(other.body_type == BodyType::DYNAMIC)
-				{
-					DynamicBodyComponent@ dyn_body_a = cast<DynamicBodyComponent>(other);
-					_data.start_pos -= dyn_body_a.velocity;
-				}*/
-				
-				body.Collide(@other.body, @_data);
-
-				if(_data.t < data.t)
-				{
-					//print("pogres");
-					data = _data;
-					data.start_pos += other.entity.transform.position;
-					data.intersect_point += other.entity.transform.position;
-				}
-			}
-
-            //body.Collide(@physics_scene.floor, @data);
 
 			if(data.intersect)
 			{
-				if(data.inside)
-				{
-					//print("aaaaaaaaaaa");
-					// push out
-					vel = (pos - data.intersect_point) * (0.0f - data.t);
-					dest = pos + vel;
-					vel *= 2.0f;
-					//new_vel = vel;
-					//break;
-					//vel = (pos - data.intersect_point) * (velocity.Length() * (1.0f - data.t));
-				}
-				else
-				{
-					float dist = vel.Length() * data.t;
-					float short_dist = Maths::Max(dist - small_number, 0.0f);
-					source_pos = pos;
-					//pos += vel.Normal() * short_dist;
+				float dist = vel.Length() * data.t;
+				float short_dist = Maths::Max(dist - small_number, 0.0f);
+				source_pos = pos;
+				pos += vel.Normal() * short_dist;
 
-					//if (i == 0 || i == 1)
+				//if (i == 0 || i == 1)
+				{
+					//float long_radius = 1.0f + small_number;
+					Vec3f touch_point = source_pos + vel * data.t;
+					Vec3f intersect_point = data.intersect_point;
+					Vec3f plane_normal = (touch_point - intersect_point).Normal();
+					first_plane = Plane(data.intersect_point, plane_normal);
+
+					float long_radius = first_plane.signedDistanceTo(touch_point) + small_number;
+
+					float vel_dot = vel.Normal().Dot(plane_normal);
+					bool slide = false;
+					if(vel_dot < -0.65f && vel.Length() >= 0.02f)
 					{
-						//float long_radius = 1.0f + small_number;
-						Vec3f touch_point = source_pos + vel * data.t;
-						Vec3f intersect_point = data.intersect_point;
-						Vec3f plane_normal = (touch_point - intersect_point).Normal();
-						first_plane = Plane(data.intersect_point, plane_normal);
-
-						float long_radius = first_plane.signedDistanceTo(touch_point) + small_number;
-
-						float vel_dot = vel.Normal().Dot(plane_normal);
-						bool slide = false;
-						if(vel_dot < -0.65f) // we should bounce
+						vel = vel.Reflect(plane_normal)*bounce;
+						new_vel = vel.Normal()*velocity.Length()*bounce;
+					}
+					else
+					{
+						slide = true;
+					}
+					if(slide)
+					{
+						dest -= plane_normal * (first_plane.signedDistanceTo(dest) - long_radius);
+						vel = dest - touch_point;
+						float ground_dot = plane_normal.Dot(Vec3f_UP);
+						if (ground_dot > 0.85f) // floor
 						{
-							if(vel.Length() >= 0.02f) // ye we bounce
+							if(vel_dot < -0.65f) // if we are moving down or it means that gravity vel is higher than our movement
 							{
-								vel = vel.Reflect(plane_normal)*bounce;
-								new_vel = vel.Normal()*velocity.Length()*bounce;
-								//grounded = false;
+								//print("here");
+								dest = touch_point;
+								new_vel = Vec3f();
+								grounded = true;
+								done = true;
 							}
-							else // speed is too low to bounce, slide
+							else
 							{
-								slide = true;
+								new_vel = vel.Normal() * velocity.Length() * friction;
+								grounded = true;
 							}
 						}
 						else
 						{
-							slide = true;
-						}
-						if(slide)
-						{
-							dest -= plane_normal * (first_plane.signedDistanceTo(dest) - long_radius);
-							vel = dest - touch_point;
-							float ground_dot = plane_normal.Dot(Vec3f_UP);
-							if (ground_dot > 0.85f) // floor
-							{
-								if(vel_dot < -0.65f) // if we are moving down
-								{
-									//print("here");
-									dest = touch_point;
-									new_vel = Vec3f();
-									grounded = true;
-									done = true;
-								}
-								else
-								{
-									new_vel = vel.Normal() * velocity.Length() * friction;
-									grounded = true;
-								}
-							}
-							else
-							{
-								//print("aaaaa");
-								new_vel = vel.Normal() * velocity.Length();
-								//grounded = false;
-							}
+							new_vel = vel.Normal() * velocity.Length();
 						}
 					}
-					/*else if (i == 1)
-					{
-						//print("why");
-						Vec3f touch_point = source_pos + vel * data.t;
-						Vec3f intersect_point = data.intersect_point;
-						Vec3f plane_normal = (touch_point - intersect_point).Normal();
-						Plane second_plane = Plane(data.intersect_point, plane_normal);
-
-						Vec3f crease = first_plane.normal.Cross(second_plane.normal).Normal();
-						float dis = (dest - pos).Dot(crease);
-						vel = crease * dis;
-						dest = pos + vel;
-					}*/
 				}
+				/*else if (i == 1)
+				{
+					//print("why");
+					Vec3f touch_point = source_pos + vel * data.t;
+					Vec3f intersect_point = data.intersect_point;
+					Vec3f plane_normal = (touch_point - intersect_point).Normal();
+					Plane second_plane = Plane(data.intersect_point, plane_normal);
+
+					Vec3f crease = first_plane.normal.Cross(second_plane.normal).Normal();
+					float dis = (dest - pos).Dot(crease);
+					vel = crease * dis;
+					dest = pos + vel;
+				}*/
 			}
 			else
 			{
 				done = true;
-				//pos = dest;
 			}
 		}
-		//if(!grounded)print("a");
+
+		new_vel += push_amount*0.005f;
+		//new_vel += push_amount.Normal()*0.01f;
+
+		if(!grounded)
+			new_vel += physics_scene.gravity_force;
+
 		result.needed = true;
 		result.id = physics_id;
 		result.new_position = dest;
