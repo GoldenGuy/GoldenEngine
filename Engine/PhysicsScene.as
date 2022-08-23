@@ -7,6 +7,7 @@ class PhysicsScene
     Vec3f gravity_force = gravity / 1080.0f; // 1440
 
     //dictionary spatial_hash;
+    //PBHash spatial_hash;
     Physical@[] physicals;
     ResolutionResult[] results;
     uint[] dynamics_to_wakeup;
@@ -17,6 +18,7 @@ class PhysicsScene
     {
         @scene = @_scene;
         physicals.clear();
+        //spatial_hash = PBHash(1, Vec3f(50,50,50));
         //floor = TriangleBody(Vec3f(-10, 3, 0), Vec3f(1, -3.5, 3), Vec3f(1, -3.5, -3));//Vec3f(-5, -1, 5), Vec3f(5, -6, 5), Vec3f(-5, -1, -5));
     }
 
@@ -24,6 +26,7 @@ class PhysicsScene
     {
         physical.physics_id = physicals.size();
         physicals.push_back(physical);
+        //spatial_hash.AddId(physical.physics_id, physical.getAABB());
     }
 
     void Tick()
@@ -44,12 +47,34 @@ class PhysicsScene
                     DynamicBodyComponent@ dyn_body_a = cast<DynamicBodyComponent>(body_a);
                     Physical@[] possible_collisions;
                     possible_collisions.clear();
-                    for(int i = 0; i < physicals.size(); i++)
+                    /*for(int i = 0; i < physicals.size(); i++)
                     {
                         if(body_a.physics_id == physicals[i].physics_id)
                             continue;
                         possible_collisions.push_back(physicals[i]); // for now no broadphase
-                    }
+                    }*/
+                    /*int[] cells = spatial_hash.getCellsInAABB(body_a.getAABB());
+                    {
+                        array<bool> already_added(MAX_ENTS, false);
+                        //already_added.clear();
+                        //already_added.resize(MAX_ENTS);
+
+                        for(int c = 0; c < cells.size(); c++)
+                        {
+                            int cell_id = cells[c];
+                            IdsInCell cell = spatial_hash.data[cell_id];
+                            for(int i = 0; i < cell.ids.size(); i++)
+                            {
+                                int id = cell.ids[i].id;
+                                //if(!already_added[id])
+                                {
+                                    //already_added[id] = true;
+                                    possible_collisions.push_back(physicals[i]);
+                                }
+                            }
+                        }
+                    }*/
+                    //print("a: "+possible_collisions.size());
                     ResolutionResult result = dyn_body_a.Physics(possible_collisions);
                     results.push_back(result);
                     //dyn_body_a.entitiy.SetPosition(result.new_position);
@@ -63,6 +88,7 @@ class PhysicsScene
             DynamicBodyComponent@ body = cast<DynamicBodyComponent>(physicals[result.id]);
             body.velocity = result.new_velocity;
             body.entity.SetPosition(result.new_position);
+            //spatial_hash.UpdateId(result.id, body.getAABB());
         }
 
         /*for(int i = 0; i < dynamics_to_wakeup.size(); i++)
@@ -94,6 +120,33 @@ class ResolutionResult
     ResolutionResult()
     {
         needed = false;
+    }
+}
+
+/*class PBHash : SpatialHash
+{
+    PBHash(int _GRID_SIZE, Vec3f _MAX_SIZE){super(_GRID_SIZE, _MAX_SIZE);}
+    
+    int getCellAt(Vec3f pos) override
+    {
+        Vec3f hash_space = Vec3f(int((pos.x + MAX_SIZE.x/2.0f)/GRID_SIZE), int((pos.y + MAX_SIZE.y/2.0f)/GRID_SIZE), int((pos.z + MAX_SIZE.z/2.0f)/GRID_SIZE));
+        return int(hash_space.x + hash_space.y * MAX_SIZE.x + hash_space.z * (MAX_SIZE.x * MAX_SIZE.y));
+    }
+
+    int[] getCellsInAABB(AABB aabb) override
+    {
+        int[] result;
+        for(int x = aabb.min.x; x < aabb.max.x; x += GRID_SIZE)
+        {
+            for(int y = aabb.min.y; y < aabb.max.y; y += GRID_SIZE)
+            {
+                for(int z = aabb.min.z; z < aabb.max.z; z += GRID_SIZE)
+                {
+                    result.push_back(getCellAt(Vec3f(x,y,z)));
+                }
+            }
+        }
+        return result;
     }
 }
 
@@ -182,4 +235,4 @@ class IdsCells
         id = -1;
         cells.clear();
     }
-}
+}*/

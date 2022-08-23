@@ -57,6 +57,12 @@ class ColliderBody
         //error("Collide not implemented");
         //printTrace();
     }
+
+    AABB getAABB()
+    {
+        // override
+        return AABB(Vec3f(-0.5), Vec3f(0.5));
+    }
 };
 
 class SphereBody : ColliderBody
@@ -156,6 +162,11 @@ class SphereBody : ColliderBody
             }
         }
     }
+
+    AABB getAABB()
+    {
+        return AABB(Vec3f(-radius), Vec3f(radius));
+    }
 };
 
 class TriangleBody : ColliderBody
@@ -207,6 +218,11 @@ class MeshBody : ColliderBody // for large entities, like world or big rooms, wi
                 break;
             }
         }
+    }
+
+    AABB getAABB()
+    {
+        return AABB(Vec3f(-10), Vec3f(10));
     }
 }
 
