@@ -1,7 +1,7 @@
 
 #include "PhysicsScene.as"
 
-const int DYNAMIC_ITERATIONS = 5;
+const int DYNAMIC_ITERATIONS = 3;
 
 enum BodyType
 {
@@ -171,10 +171,10 @@ class TriangleBody : ColliderBody
     }
 }
 
-class MeshBody : ColliderBody
+class MeshBody : ColliderBody // for large entities, like world or big rooms, will perform really bad if small, should make a separate class for it
 {
     TriangleBody@[] triangles;
-    dictionary spatial_hash;
+    //dictionary spatial_hash;
 
     MeshBody(Vertex[] mesh, int prim_type = 0) // prim_type = 0 - triangles, 1 - quads
     {

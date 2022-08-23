@@ -6,6 +6,7 @@ class PhysicsScene
     Vec3f gravity = Vec3f(0.0, -9.81, 0.0);
     Vec3f gravity_force = gravity / 1080.0f; // 1440
 
+    //dictionary spatial_hash;
     Physical@[] physicals;
     ResolutionResult[] results;
     uint[] dynamics_to_wakeup;
@@ -93,5 +94,92 @@ class ResolutionResult
     ResolutionResult()
     {
         needed = false;
+    }
+}
+
+const int MAX_ENTS = 1024;
+
+class SpatialHash
+{
+    int GRID_SIZE = 2;
+    Vec3f MAX_SIZE = Vec3f(100,100,100); // x y and z
+    IdsCells[] ids;
+    IdsInCell[] data;
+
+    SpatialHash(int _GRID_SIZE, Vec3f _MAX_SIZE)
+    {
+        GRID_SIZE = _GRID_SIZE;
+        MAX_SIZE = _MAX_SIZE;
+        ids.clear();
+        ids.resize(MAX_ENTS);
+        data.clear();
+        data.resize(int(MAX_SIZE.x * MAX_SIZE.y * MAX_SIZE.z));
+    }
+
+    int getCellAt(Vec3f pos) // implement
+    {
+        return 0;
+    }
+
+    int[] getCellsInAABB(AABB aabb) // too
+    {
+        int[] result;
+        return result;
+    }
+
+    void AddId(int id, AABB aabb)
+    {
+        int[] cells = getCellsInAABB(aabb);
+        IdsCells object;
+        object.id = id;
+        object.cells = cells;
+        for(int i = 0; i < cells.size(); i++)
+        {
+            data[i].ids.push_back(object);
+        }
+        ids[id] = object;
+    }
+
+    void UpdateId(int id, AABB aabb)
+    {
+        //IdsCells object = ids[id];
+        RemoveIdFromCells(id);
+        AddId(id, aabb);
+    }
+
+    void RemoveIdFromCells(int id)
+    {
+        IdsCells object = ids[id];
+        for(int i = 0; i < object.cells.size(); i++)
+        {
+            int cell_id = object.cells[i];
+            IdsInCell cell = data[cell_id];
+            for(int j = 0; j < cell.ids.size(); j++)
+            {
+                if(cell.ids[j].id == id)
+                {
+                    data[cell_id].ids.removeAt(j);
+                    break;
+                }
+            }
+        }
+        ids[id].cells.clear();
+    }
+}
+
+class IdsInCell
+{
+    IdsCells[] ids;
+}
+
+class IdsCells
+{
+    int id;
+    int[] cells;
+
+    IdsCells()
+    {
+        id = -1;
+        cells.clear();
     }
 }

@@ -1,5 +1,6 @@
 
 #include "Vec3f.as"
+#include "AABB.as"
 #include "Quaternion.as"
 #include "Plane.as"
 

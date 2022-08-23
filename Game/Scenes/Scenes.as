@@ -10,30 +10,6 @@ void CreateTestLevel(Scene@ scene)
         ent.SetPositionImmediate(Vec3f((i-10)*0.5f,Maths::Abs(i%5)*1.5f,Maths::Abs(i%5)*1.5f));
     }
 
-    /*{
-        Entity@ ent = scene.CreateEntity("ball");
-        ent.AddComponent(RenderComponent());
-        ent.AddComponent(DynamicBodyComponent(@scene.physics_scene, @SphereBody(1.0f)));
-        //ent.AddComponent(MoveComponent());
-        ent.SetPositionImmediate(Vec3f(-5,1.5,3));
-    }
-
-    {
-        Entity@ ent = scene.CreateEntity("ball");
-        ent.AddComponent(RenderComponent());
-        ent.AddComponent(DynamicBodyComponent(@scene.physics_scene, @SphereBody(1.0f)));
-        //ent.AddComponent(MoveComponent());
-        ent.SetPositionImmediate(Vec3f(-3,3,3));
-    }
-
-    {
-        Entity@ ent = scene.CreateEntity("ball");
-        ent.AddComponent(RenderComponent());
-        ent.AddComponent(DynamicBodyComponent(@scene.physics_scene, @SphereBody(1.0f)));
-        //ent.AddComponent(MoveComponent());
-        ent.SetPositionImmediate(Vec3f(-1,4.5,3));
-    }*/
-
     {
         Entity@ ent = scene.CreateEntity("world");
         ent.AddComponent(MeshRendererComponent(leveltest));
