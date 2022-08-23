@@ -8,6 +8,7 @@ class PhysicsScene
 
     //dictionary spatial_hash;
     //PBHash spatial_hash;
+    SpatialHash spatial_hash;
     Physical@[] physicals;
     ResolutionResult[] results;
     uint[] dynamics_to_wakeup;
@@ -18,6 +19,7 @@ class PhysicsScene
     {
         @scene = @_scene;
         physicals.clear();
+        spatial_hash = SpatialHash(2);
         //spatial_hash = PBHash(1, Vec3f(50,50,50));
         //floor = TriangleBody(Vec3f(-10, 3, 0), Vec3f(1, -3.5, 3), Vec3f(1, -3.5, -3));//Vec3f(-5, -1, 5), Vec3f(5, -6, 5), Vec3f(-5, -1, -5));
     }
@@ -26,6 +28,7 @@ class PhysicsScene
     {
         physical.physics_id = physicals.size();
         physicals.push_back(physical);
+        spatial_hash.Add(physical.physics_id, physical.getAABB());
         //spatial_hash.AddId(physical.physics_id, physical.getAABB());
     }
 
@@ -47,34 +50,35 @@ class PhysicsScene
                     DynamicBodyComponent@ dyn_body_a = cast<DynamicBodyComponent>(body_a);
                     Physical@[] possible_collisions;
                     possible_collisions.clear();
-                    /*for(int i = 0; i < physicals.size(); i++)
-                    {
-                        if(body_a.physics_id == physicals[i].physics_id)
-                            continue;
-                        possible_collisions.push_back(physicals[i]); // for now no broadphase
-                    }*/
-                    /*int[] cells = spatial_hash.getCellsInAABB(body_a.getAABB());
-                    {
-                        array<bool> already_added(MAX_ENTS, false);
-                        //already_added.clear();
-                        //already_added.resize(MAX_ENTS);
 
-                        for(int c = 0; c < cells.size(); c++)
+                    dictionary already_added;
+
+                    AABB aabb = body_a.getAABB();
+                    for(int x = int(aabb.min.x/spatial_hash.cell_size); x <= int(aabb.max.x/spatial_hash.cell_size); x++)
+                    {
+                        for(int y = int(aabb.min.y/spatial_hash.cell_size); y <= int(aabb.max.y/spatial_hash.cell_size); y++)
                         {
-                            int cell_id = cells[c];
-                            IdsInCell cell = spatial_hash.data[cell_id];
-                            for(int i = 0; i < cell.ids.size(); i++)
+                            for(int z = int(aabb.min.z/spatial_hash.cell_size); z <= int(aabb.max.z/spatial_hash.cell_size); z++)
                             {
-                                int id = cell.ids[i].id;
-                                //if(!already_added[id])
+                                string hash = spatial_hash.posToHash(Vec3f(x,y,z));
+                                SHCell@ cell;
+                                if(spatial_hash.sh.get(hash, @cell))
                                 {
-                                    //already_added[id] = true;
-                                    possible_collisions.push_back(physicals[i]);
+                                    for(int i = 0; i < cell.ids.size(); i++)
+                                    {
+                                        int id = cell.ids[i];
+                                        if(id == body_a.physics_id) continue;
+                                        if(!already_added.exists("id:"+id))
+                                        {
+                                            already_added.set("id:"+id, true);
+                                            possible_collisions.push_back(physicals[id]);
+                                        }
+                                    }
                                 }
                             }
                         }
-                    }*/
-                    //print("a: "+possible_collisions.size());
+                    }
+                    
                     ResolutionResult result = dyn_body_a.Physics(possible_collisions);
                     results.push_back(result);
                     //dyn_body_a.entitiy.SetPosition(result.new_position);
@@ -88,6 +92,7 @@ class PhysicsScene
             DynamicBodyComponent@ body = cast<DynamicBodyComponent>(physicals[result.id]);
             body.velocity = result.new_velocity;
             body.entity.SetPosition(result.new_position);
+            spatial_hash.Move(result.id, body.getAABB());
             //spatial_hash.UpdateId(result.id, body.getAABB());
         }
 
@@ -123,116 +128,100 @@ class ResolutionResult
     }
 }
 
-/*class PBHash : SpatialHash
-{
-    PBHash(int _GRID_SIZE, Vec3f _MAX_SIZE){super(_GRID_SIZE, _MAX_SIZE);}
-    
-    int getCellAt(Vec3f pos) override
-    {
-        Vec3f hash_space = Vec3f(int((pos.x + MAX_SIZE.x/2.0f)/GRID_SIZE), int((pos.y + MAX_SIZE.y/2.0f)/GRID_SIZE), int((pos.z + MAX_SIZE.z/2.0f)/GRID_SIZE));
-        return int(hash_space.x + hash_space.y * MAX_SIZE.x + hash_space.z * (MAX_SIZE.x * MAX_SIZE.y));
-    }
-
-    int[] getCellsInAABB(AABB aabb) override
-    {
-        int[] result;
-        for(int x = aabb.min.x; x < aabb.max.x; x += GRID_SIZE)
-        {
-            for(int y = aabb.min.y; y < aabb.max.y; y += GRID_SIZE)
-            {
-                for(int z = aabb.min.z; z < aabb.max.z; z += GRID_SIZE)
-                {
-                    result.push_back(getCellAt(Vec3f(x,y,z)));
-                }
-            }
-        }
-        return result;
-    }
-}
-
-const int MAX_ENTS = 1024;
-
 class SpatialHash
 {
-    int GRID_SIZE = 2;
-    Vec3f MAX_SIZE = Vec3f(100,100,100); // x y and z
-    IdsCells[] ids;
-    IdsInCell[] data;
+    int cell_size;
+    dictionary sh;
+    dictionary ids;
 
-    SpatialHash(int _GRID_SIZE, Vec3f _MAX_SIZE)
+    SpatialHash(int _cell_size)
     {
-        GRID_SIZE = _GRID_SIZE;
-        MAX_SIZE = _MAX_SIZE;
-        ids.clear();
-        ids.resize(MAX_ENTS);
-        data.clear();
-        data.resize(int(MAX_SIZE.x * MAX_SIZE.y * MAX_SIZE.z));
+        cell_size = _cell_size;
     }
 
-    int getCellAt(Vec3f pos) // implement
+    void Add(int id, AABB aabb)
     {
-        return 0;
-    }
-
-    int[] getCellsInAABB(AABB aabb) // too
-    {
-        int[] result;
-        return result;
-    }
-
-    void AddId(int id, AABB aabb)
-    {
-        int[] cells = getCellsInAABB(aabb);
-        IdsCells object;
-        object.id = id;
-        object.cells = cells;
-        for(int i = 0; i < cells.size(); i++)
-        {
-            data[i].ids.push_back(object);
-        }
-        ids[id] = object;
-    }
-
-    void UpdateId(int id, AABB aabb)
-    {
-        //IdsCells object = ids[id];
-        RemoveIdFromCells(id);
-        AddId(id, aabb);
-    }
-
-    void RemoveIdFromCells(int id)
-    {
-        IdsCells object = ids[id];
-        for(int i = 0; i < object.cells.size(); i++)
-        {
-            int cell_id = object.cells[i];
-            IdsInCell cell = data[cell_id];
-            for(int j = 0; j < cell.ids.size(); j++)
-            {
-                if(cell.ids[j].id == id)
-                {
-                    data[cell_id].ids.removeAt(j);
-                    break;
+        string[] cells;
+        cells.clear();
+        for(int x = int(aabb.min.x/cell_size); x <= int(aabb.max.x/cell_size); x++)
+		{
+			for(int y = int(aabb.min.y/cell_size); y <= int(aabb.max.y/cell_size); y++)
+			{
+				for(int z = int(aabb.min.z/cell_size); z <= int(aabb.max.z/cell_size); z++)
+				{
+                    string hash = posToHash(Vec3f(x,y,z));
+                    SHCell@ cell;
+                    if(sh.get(hash, @cell))
+                    {
+                        cell.Add(id);
+                        cells.push_back(hash);
+                    }
+                    else
+                    {
+                        SHCell _cell = SHCell();
+                        _cell.Add(id);
+                        sh.set(hash, @_cell);
+                        cells.push_back(hash);
+                    }
                 }
             }
         }
-        ids[id].cells.clear();
+        ids.set("id:"+id, cells);
     }
-}
 
-class IdsInCell
-{
-    IdsCells[] ids;
-}
-
-class IdsCells
-{
-    int id;
-    int[] cells;
-
-    IdsCells()
+    void Remove(int id)
     {
-        id = -1;
+        string[] cells;
+        ids.get("id:"+id, cells);
+        for(int i = 0; i < cells.size(); i++)
+        {
+            string hash = cells[i];
+            SHCell@ cell;
+            if(sh.get(hash, @cell))
+            {
+                cell.Remove(id);
+            }
+        }
         cells.clear();
+        ids.set("id:"+id, cells);
     }
-}*/
+
+    void Move(int id, AABB aabb)
+    {
+        Remove(id);
+        Add(id, aabb);
+    }
+
+    string posToHash(Vec3f pos)
+    {
+        return int(pos.x/cell_size)+":"+int(pos.y/cell_size)+":"+int(pos.z/cell_size);
+    }
+}
+
+class SHCell
+{
+    int[] ids;
+
+    SHCell(){ids.clear();}
+
+    void Add(int id)
+    {
+        if(has(id) == -1)
+            ids.push_back(id);
+    }
+
+    int has(int id)
+    {
+        for(int i = 0; i < ids.size(); i++)
+            if(ids[i] == id)
+                return i;
+        return -1;
+    }
+
+    void Remove(int id)
+    {
+        int index = has(id);
+        if(index != -1)
+            ids.removeAt(index);
+    }
+}
