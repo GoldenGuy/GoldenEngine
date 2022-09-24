@@ -12,11 +12,12 @@
 
 namespace GoldEngine
 {
-	Game game;
+	Game@ game;
 	
 	void Init()
 	{
-		game = Game();
+		Game newgame = Game();
+		@game = @newgame;
 		SaveToRules();
 		game.Init();
 	}

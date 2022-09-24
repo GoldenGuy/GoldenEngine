@@ -29,6 +29,14 @@ class Physical : Component // can only be one in an entity
         @body = @_body;
     }
 
+    AABB getAABB()
+    {
+        AABB aabb = body.getAABB();
+        aabb.min += entity.transform.position;
+        aabb.max += entity.transform.position;
+        return aabb;
+    }
+
     //ResolutionResult Physics(Physical@[] colliders){}
     //bool doesCollideWith(Entity@ other);
     //void onCollideWith(Entity@ other);
