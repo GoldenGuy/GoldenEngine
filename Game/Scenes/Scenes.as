@@ -17,8 +17,6 @@ void CreateTestLevel(Scene@ scene)
         Entity@ ent = scene.CreateEntity("world");
         ent.AddComponent(MeshRendererComponent(leveltest));
         ent.AddComponent(StaticBodyComponent(@scene.physics_scene, @MeshBody(leveltest)));
-        //ent.AddComponent(MoveComponent()); 
-        ent.SetPositionImmediate(Vec3f(0,-6,2));
     }
 
     {
@@ -26,7 +24,7 @@ void CreateTestLevel(Scene@ scene)
         ent.AddComponent(FreeFlyMovement());
         ent.AddComponent(FPSCameraController());
 
-        ent.SetPositionImmediate(Vec3f(0,-6,2));
+        ent.SetPositionImmediate(Vec3f(0,10,0));
     }
 }
 
