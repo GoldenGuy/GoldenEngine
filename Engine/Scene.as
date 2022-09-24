@@ -3,8 +3,9 @@ class Scene
 {
 	Camera camera;
 	Entity@[] entities;
-	ITickable@[] tickables;
-	IRenderable@[] renderables; // make a custom class instead
+
+	comp_func@[] tickables;
+	comp_func@[] renderables; // make a custom class instead
 
 	uint[] update_transforms;
 
@@ -42,7 +43,7 @@ class Scene
 
 		for(uint i = 0; i < tickables.size(); i++)
 		{
-			tickables[i].Tick();
+			tickables[i]();
 		}
 	}
 
@@ -66,7 +67,7 @@ class Scene
 
 		for(uint i = 0; i < renderables.size(); i++)
 		{
-			renderables[i].Render();
+			renderables[i]();
 		}
 	}
 
@@ -88,21 +89,18 @@ class Scene
 		ITickable@ tickable = cast<ITickable>(component);
 		if(tickable !is null)
 		{
-			print("TICKABLE ADDED");
-			tickables.push_back(@tickable);
+			tickables.push_back(@comp_func(tickable.Tick));
 		}
 
 		IRenderable@ renderable = cast<IRenderable>(component);
 		if(renderable !is null)
 		{
-			print("RENDERABLE ADDED");
-			renderables.push_back(@renderable);
+			renderables.push_back(@comp_func(renderable.Render));
 		}
 
 		Physical@ physical = cast<Physical>(component);
 		if(physical !is null)
 		{
-			print("PHYSICAL ADDED");
 			physics_scene.AddPhysicsBody(@physical);
 		}
 	}

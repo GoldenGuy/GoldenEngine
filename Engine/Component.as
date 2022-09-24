@@ -1,4 +1,6 @@
 
+funcdef void comp_func();
+
 class Component
 {
     Entity@ entity;
