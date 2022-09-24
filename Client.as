@@ -34,9 +34,3 @@ void ShowTeamMenu( CRules@ this )
 {
 	
 }
-
-void onMainMenuCreated(CRules@ this, CContextMenu@ menu)
-{
-	Menu::addContextItem(menu, "Escape", "Exit.as", "void Exit()");
-	for(int i = 0; i < 20; i++) Menu::addSeparator(menu);
-}

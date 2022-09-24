@@ -4,14 +4,13 @@ class Camera
     Scene@ scene;
     
     Vec3f position;
-    float pitch, yaw;
+    Quaternion angle;
 
     Camera(Scene@ _scene)
     {
         @scene = @_scene;
         position = Vec3f();
-        pitch = 0;
-        yaw = 0;
+        angle = Quaternion(Vec3f(-1, 1, 0), 12);
     }
 
     float[] getViewMatrix()
@@ -19,7 +18,7 @@ class Camera
         float[] view;
         Matrix::MakeIdentity(view);
 
-        float[] temp_mat;
+        /*float[] temp_mat;
 		Matrix::MakeIdentity(temp_mat);
 		float[] another_temp_mat;
 		Matrix::MakeIdentity(another_temp_mat);
@@ -31,7 +30,15 @@ class Camera
 		Matrix::MakeIdentity(another_temp_mat);
 		Matrix::SetTranslation(another_temp_mat, -position.x, -position.y, -position.z);
 		
-		Matrix::Multiply(temp_mat, another_temp_mat, view);
+		Matrix::Multiply(temp_mat, another_temp_mat, view);*/
+
+        Matrix::FromQuaternion(view, angle);
+
+        float[] temp_mat;
+		Matrix::MakeIdentity(temp_mat);
+        Matrix::SetTranslation(temp_mat, -position.x, -position.y, -position.z);
+
+        Matrix::MultiplyImmediate(view, temp_mat);
 
         return view;
     }

@@ -3,14 +3,16 @@ class Scene
 {
 	Camera camera;
 	Entity@[] entities;
-	uint[] update_transforms;
 	ITickable@[] tickables;
 	IRenderable@[] renderables; // make a custom class instead
+
+	uint[] update_transforms;
+
 	PhysicsScene physics_scene;
 
 	dictionary data;
 
-	void PreInit()
+	void PreInit() // cant do this in constructor because of camera and phys world
 	{
 		entities.clear();
 		tickables.clear();
@@ -53,7 +55,7 @@ class Scene
 		Render::SetAmbientLight(color_white);
 
 		float[] proj;
-		Matrix::MakePerspective(proj, dtr(75), float(getScreenWidth())/float(getScreenHeight()), 0.01f, 400.0f);
+		Matrix::MakePerspective(proj, dtr(75.0f), float(getScreenWidth())/float(getScreenHeight()), 0.01f, 400.0f);
 		Render::SetProjectionTransform(proj);
 
 		Render::SetViewTransform(camera.getViewMatrix());
@@ -86,22 +88,22 @@ class Scene
 		ITickable@ tickable = cast<ITickable>(component);
 		if(tickable !is null)
 		{
-			tickables.push_back(tickable);
-			return;
+			print("TICKABLE ADDED");
+			tickables.push_back(@tickable);
 		}
 
 		IRenderable@ renderable = cast<IRenderable>(component);
 		if(renderable !is null)
 		{
-			renderables.push_back(renderable);
-			return;
+			print("RENDERABLE ADDED");
+			renderables.push_back(@renderable);
 		}
 
 		Physical@ physical = cast<Physical>(component);
 		if(physical !is null)
 		{
-			physics_scene.AddPhysicsBody(physical);
-			return;
+			print("PHYSICAL ADDED");
+			physics_scene.AddPhysicsBody(@physical);
 		}
 	}
 }

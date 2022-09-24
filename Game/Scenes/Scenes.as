@@ -1,14 +1,17 @@
 
 void CreateTestLevel(Scene@ scene)
 {
-    for(int i = 0; i < 20; i++)
+    scene.camera.position = Vec3f(0, 1.5f, -4);
+    scene.camera.angle = Quaternion();
+    
+    /*for(int i = 0; i < 20; i++)
     {
         Entity@ ent = scene.CreateEntity("ball");
         ent.AddComponent(RenderComponent());
         ent.AddComponent(DynamicBodyComponent(@scene.physics_scene, @SphereBody(1.0f)));
         //ent.AddComponent(MoveComponent());
         ent.SetPositionImmediate(Vec3f((i-10)*0.5f,Maths::Abs(i%5)*1.5f,Maths::Abs(i%5)*1.5f));
-    }
+    }*/
 
     {
         Entity@ ent = scene.CreateEntity("world");
@@ -18,8 +21,13 @@ void CreateTestLevel(Scene@ scene)
         ent.SetPositionImmediate(Vec3f(0,-6,2));
     }
 
-    scene.camera.position = Vec3f(0,1.5f,-4);
-    scene.camera.pitch = -35; //
+    {
+        Entity@ ent = scene.CreateEntity("player kinda");
+        ent.AddComponent(FreeFlyMovement());
+        ent.AddComponent(FPSCameraController());
+
+        ent.SetPositionImmediate(Vec3f(0,-6,2));
+    }
 }
 
 Vertex[] leveltest = {

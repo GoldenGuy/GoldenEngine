@@ -32,12 +32,5 @@ class Game
             render_delta += getRenderApproximateCorrectionFactor();
 
         scene.Render();
-
-        /*string names = "";
-        for(uint i = 0; i < current_scene.entities.size(); i++)
-        {
-            names += scene.entities[i].name;
-        }
-        GUI::DrawText("ents: "+names, Vec2f(6,200), color_white);*/
     }
 }
