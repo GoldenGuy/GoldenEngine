@@ -12,6 +12,8 @@
 
 namespace GoldEngine
 {
+	dictionary ComponentDB;
+	
 	Game@ game;
 	
 	void Init()

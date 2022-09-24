@@ -21,10 +21,37 @@ class Entity
 	void Init()
     {
         update_transforms = false;
-        for (uint i = 0; i < components.length(); i++)
+        for (uint i = 0; i < components.size(); i++)
         {
             components[i].Init();
         }
+    }
+
+    bool HasComponent(Component@ component)
+    {
+        for (uint i = 0; i < components.size(); i++)
+        {
+            if(component.getName() == components[i].getName())
+                return true;
+        }
+        return false;
+    }
+
+    void AddComponent(Component@ component, bool init = false)
+    {
+        if(HasComponent(component))
+        {
+            print("component "+component.getName()+" already added!!!");
+            return;
+        }
+
+        @component.entity = @this;
+
+        components.push_back(component);
+
+        scene.AddComponent(component);
+
+        if(init) component.Init();
     }
 
     void SetPosition(Vec3f _position)
@@ -81,16 +108,5 @@ class Entity
         transform.old_position = transform.position;
         transform.old_rotation = transform.rotation;
         transform.old_scale = transform.scale;
-    }
-
-    void AddComponent(Component@ component, bool init = false)
-    {
-        @component.entity = @this;
-
-        components.push_back(component);
-
-        scene.AddComponent(component);
-
-        if(init) component.Init();
     }
 }

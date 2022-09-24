@@ -1,6 +1,8 @@
 
 class MeshRendererComponent : Component, IRenderable
 {
+    string getName() const {return "mesh_render";}
+    
     Vertex[] vertices;
 
     MeshRendererComponent(Vertex[] _vertices)

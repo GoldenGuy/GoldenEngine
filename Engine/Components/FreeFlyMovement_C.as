@@ -1,6 +1,8 @@
 
 class FreeFlyMovement : Component, ITickable, IRenderable
 {
+    string getName() const {return "free_fly";}
+    
     void Tick()
     {
         Vec3f new_pos;

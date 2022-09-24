@@ -1,7 +1,7 @@
 
 class RenderComponent : Component, IRenderable
 {
-    
+    string getName() const {return "render_c";}
     // cube mesh with 8 vertices
     /*Vertex[] vertices = 
     {

@@ -1,7 +1,9 @@
 
 class DynamicBodyComponent : Physical
 {
-    Vec3f velocity;
+    string getName() const {return "dynamic_body";}
+	
+	Vec3f velocity;
 	float friction;
 	float bounce;
     bool sleeping;

@@ -1,6 +1,8 @@
 
 class FPSCameraController : Component, IRenderable, ITickable
 {
+    string getName() const {return "fps_cam";}
+    
     float sens = 50.0f; // 1-100
     float old_pitch, pitch, old_yaw, yaw;
     Quaternion angle;

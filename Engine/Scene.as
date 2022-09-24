@@ -3,6 +3,7 @@ class Scene
 {
 	Camera camera;
 	Entity@[] entities;
+	uint entity_id_tracker = 0;
 
 	comp_func@[] tickables;
 	comp_func@[] renderables; // make a custom class instead
@@ -74,7 +75,7 @@ class Scene
 	Entity@ CreateEntity(string name)
 	{
 		Entity entity = Entity(name, this);
-		entity.id = entities.size();
+		entity.id = entity_id_tracker++;
 		entities.push_back(@entity);
 		return @entity;
 	}
@@ -86,6 +87,8 @@ class Scene
 
 	void AddComponent(Component@ component)
 	{
+		
+		
 		ITickable@ tickable = cast<ITickable>(component);
 		if(tickable !is null)
 		{

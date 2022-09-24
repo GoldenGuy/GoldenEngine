@@ -1,6 +1,8 @@
 
 class MoveComponent : Component, ITickable
 {
+    string getName() const {return "move_c";}
+
     void Tick()
     {
         //entity.position.x = Maths::Sin(dtr(getGameTime()) * 2.7f) * 4.0f;

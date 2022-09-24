@@ -5,7 +5,10 @@ class Component
 {
     Entity@ entity;
 
+    bool opEquals(const Component&in other) const { return getName() == other.getName(); }
+
     void Init(){}
+    string getName() const {return "none";} // this is ass
 }
 
 interface ITickable
@@ -18,7 +21,7 @@ interface IRenderable
     void Render();
 }
 
-class Physical : Component // can only be one in an entity
+class Physical : Component
 {
     uint physics_id;
     PhysicsScene@ physics_scene;
