@@ -1,5 +1,6 @@
 
 const Vec3f Vec3f_UP = Vec3f(0, 1, 0);
+const Vec3f Vec3f_ZERO = Vec3f(0, 0, 0);
 
 class Vec3f
 {

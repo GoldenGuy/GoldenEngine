@@ -67,49 +67,6 @@ namespace Matrix
 		a[14] = -zaxis.Dot(position);
 		a[15] = 1;
 	}
-
-	void FromQuaternion(float[]&inout a, Quaternion q)
-	{
-		float sqw = q.w*q.w;
-		float sqx = q.x*q.x;
-		float sqy = q.y*q.y;
-		float sqz = q.z*q.z;
-
-		// invs (inverse square length) is only required if quaternion is not already normalised
-		float invs = 1.0f / (sqx + sqy + sqz + sqw);
-		a[0] = ( sqx - sqy - sqz + sqw)*invs; // since sqw + sqx + sqy + sqz =1/invs*invs
-		a[5] = (-sqx + sqy - sqz + sqw)*invs;
-		a[10] = (-sqx - sqy + sqz + sqw)*invs;
-		
-		float tmp1 = q.x*q.y;
-		float tmp2 = q.z*q.w;
-		a[4] = 2.0f * (tmp1 + tmp2)*invs;
-		a[1] = 2.0f * (tmp1 - tmp2)*invs;
-		
-		tmp1 = q.x*q.z;
-		tmp2 = q.y*q.w;
-		a[8] = 2.0f * (tmp1 - tmp2)*invs;
-		a[2] = 2.0f * (tmp1 + tmp2)*invs;
-		tmp1 = q.y*q.z;
-		tmp2 = q.x*q.w;
-		a[9] = 2.0f * (tmp1 + tmp2)*invs;
-		a[6] = 2.0f * (tmp1 - tmp2)*invs;
-	}
-
-	/*void FromQuaternion(float[]&inout a, Quaternion q)
-	{
-		a[0] = 2.0f * (q.x * q.x + q.y * q.y) - 1;
-		a[1] = 2.0f * (q.y * q.z - q.x * q.w);
-		a[2] = 2.0f * (q.y * q.w + q.x * q.z);
-		
-		a[4] = 2.0f * (q.y * q.z + q.x * q.w);
-		a[5] = 2.0f * (q.x * q.x + q.z * q.z) - 1;
-		a[6] = 2.0f * (q.z * q.w - q.x * q.y);
-		
-		a[8] = 2.0f * (q.y * q.w - q.x * q.z);
-		a[9] = 2.0f * (q.z * q.w + q.x * q.y);
-		a[10] = 2.0f * (q.x * q.x + q.w * q.w) - 1;
-	}*/
 }
 
 float get_lowest_root(float a, float b, float c, float max)

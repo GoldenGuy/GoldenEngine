@@ -45,9 +45,12 @@ class FPSCameraController : Component, IRenderable, ITickable
 
     void Render()
     {
+        getHUD().ShowCursor();
+        if(Menu::getMainMenu() is null) getHUD().HideCursor();
+        
         float interp_pitch = Maths::Lerp(old_pitch, pitch, GoldEngine::game.render_delta);
         float interp_yaw = Maths::Lerp(old_yaw, yaw, GoldEngine::game.render_delta);
-        angle = EulerToQuaternion(0, dtr(interp_yaw), dtr(interp_pitch));
+        angle = Quaternion(dtr(interp_pitch), dtr(interp_yaw), 0);
         entity.scene.camera.angle = angle;
     }
 }

@@ -29,12 +29,21 @@ class Quaternion
         w = cos_a;
     }
 
-    Quaternion(float roll, float yaw, float pitch) //Euler To Quaternion
+    Quaternion(float pitch, float yaw, float roll)
     {
-        x = Maths::Sin(pitch / 2.0f) * Maths::Cos(yaw / 2.0f) * Maths::Cos(roll / 2.0f) - Maths::Cos(pitch / 2.0f) * Maths::Sin(yaw / 2.0f) * Maths::Sin(roll / 2.0f);
-        y = Maths::Cos(pitch / 2.0f) * Maths::Sin(yaw / 2.0f) * Maths::Cos(roll / 2.0f) + Maths::Sin(pitch / 2.0f) * Maths::Cos(yaw / 2.0f) * Maths::Sin(roll / 2.0f);
-        z = Maths::Cos(pitch / 2.0f) * Maths::Cos(yaw / 2.0f) * Maths::Sin(roll / 2.0f) - Maths::Sin(pitch / 2.0f) * Maths::Sin(yaw / 2.0f) * Maths::Cos(roll / 2.0f);
-        w = Maths::Cos(pitch / 2.0f) * Maths::Cos(yaw / 2.0f) * Maths::Cos(roll / 2.0f) + Maths::Sin(pitch / 2.0f) * Maths::Sin(yaw / 2.0f) * Maths::Sin(roll / 2.0f);
+        // Assuming the angles are in radians.
+        float c1 = Maths::Cos(yaw/2.0f);
+        float s1 = Maths::Sin(yaw/2.0f);
+        float c2 = Maths::Cos(roll/2.0f);
+        float s2 = Maths::Sin(roll/2.0f);
+        float c3 = Maths::Cos(pitch/2.0f);
+        float s3 = Maths::Sin(pitch/2.0f);
+        float c1c2 = c1*c2;
+        float s1s2 = s1*s2;
+        w = c1c2*c3 - s1s2*s3;
+        x = c1c2*s3 + s1s2*c3;
+        y = s1*c2*c3 + c1*s2*s3;
+        z = c1*s2*c3 - s1*c2*s3;
     }
 
     Quaternion opMul(Quaternion q) const
@@ -47,6 +56,14 @@ class Quaternion
         return r;
     }
 
+    void opMulAssign(float f)
+    {
+        x *= f;
+        y *= f;
+        z *= f;
+        w *= f;
+    }
+
     Quaternion Inverse()
     {
         return Quaternion(-x, -y, -z, w);
@@ -56,14 +73,27 @@ class Quaternion
 	{
 		return Quaternion(x + (desired.x - x) * t, y + (desired.y - y) * t, z + (desired.z - z) * t, w + (desired.w - w) * t);
 	}
-}
 
-Quaternion EulerToQuaternion(float roll, float yaw, float pitch)
-{
-    float x = Maths::Sin(pitch / 2.0f) * Maths::Cos(yaw / 2.0f) * Maths::Cos(roll / 2.0f) - Maths::Cos(pitch / 2.0f) * Maths::Sin(yaw / 2.0f) * Maths::Sin(roll / 2.0f);
-    float y = Maths::Cos(pitch / 2.0f) * Maths::Sin(yaw / 2.0f) * Maths::Cos(roll / 2.0f) + Maths::Sin(pitch / 2.0f) * Maths::Cos(yaw / 2.0f) * Maths::Sin(roll / 2.0f);
-    float z = Maths::Cos(pitch / 2.0f) * Maths::Cos(yaw / 2.0f) * Maths::Sin(roll / 2.0f) - Maths::Sin(pitch / 2.0f) * Maths::Sin(yaw / 2.0f) * Maths::Cos(roll / 2.0f);
-    float w = Maths::Cos(pitch / 2.0f) * Maths::Cos(yaw / 2.0f) * Maths::Cos(roll / 2.0f) + Maths::Sin(pitch / 2.0f) * Maths::Sin(yaw / 2.0f) * Maths::Sin(roll / 2.0f);
+    void getMatrix(float[]&inout dest)
+    {
+        dest[0] = 1.0f - 2.0f*y*y - 2.0f*z*z;
+        dest[4] = 2.0f*x*y + 2.0f*z*w;
+        dest[8] = 2.0f*x*z - 2.0f*y*w;
+        dest[12] = 0.0f;
 
-    return Quaternion(x, y, z, w);
+        dest[1] = 2.0f*x*y - 2.0f*z*w;
+        dest[5] = 1.0f - 2.0f*x*x - 2.0f*z*z;
+        dest[9] = 2.0f*z*y + 2.0f*x*w;
+        dest[13] = 0.0f;
+
+        dest[2] = 2.0f*x*z + 2.0f*y*w;
+        dest[6] = 2.0f*z*y - 2.0f*x*w;
+        dest[10] = 1.0f - 2.0f*x*x - 2.0f*y*y;
+        dest[14] = 0.0f;
+
+        dest[3] = 0.f;
+        dest[7] = 0.f;
+        dest[11] = 0.f;
+        dest[15] = 1.f;
+    }
 }
