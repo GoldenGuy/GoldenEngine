@@ -31,7 +31,7 @@ class Entity
     {
         for (uint i = 0; i < components.size(); i++)
         {
-            if(component.getName() == components[i].getName())
+            if(component == components[i])
                 return true;
         }
         return false;
@@ -39,9 +39,11 @@ class Entity
 
     void AddComponent(Component@ component, bool init = false)
     {
+        GoldEngine::game.comp_manager.RegisterComponent(@component);
+        
         if(HasComponent(component))
         {
-            print("component "+component.getName()+" already added!!!");
+            print("component "+component.name+" already added!!!");
             return;
         }
 
@@ -57,30 +59,30 @@ class Entity
     void SetPosition(Vec3f _position)
     {
         transform.position = _position;
-        if(!update_transforms)
+        /*if(!update_transforms)
         {
             scene.UpdateTransforms(this);
-        }
+        }*/
         update_transforms = true;
     }
 
     void SetRotation(Quaternion _rotation)
     {
         transform.rotation = _rotation;
-        if(!update_transforms)
+        /*if(!update_transforms)
         {
             scene.UpdateTransforms(this);
-        }
+        }*/
         update_transforms = true;
     }
 
     void SetScale(Vec3f _scale)
     {
         transform.scale = _scale;
-        if(!update_transforms)
+        /*if(!update_transforms)
         {
             scene.UpdateTransforms(this);
-        }
+        }*/
         update_transforms = true;
     }
 

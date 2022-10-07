@@ -1,18 +1,19 @@
 
-class MeshRendererComponent : Component, IRenderable
+class MeshRendererComponent : Component
 {
-    string getName() const {return "mesh_render";}
-    
     Vertex[] vertices;
 
     MeshRendererComponent(Vertex[] _vertices)
     {
+        hooks = CompHooks::RENDER;
+        name = "MeshRendererComponent";
+        
         vertices = _vertices;
     }
 
     void Render()
     {
-        Vec3f interpolated_position = entity.transform.old_position.Lerp(entity.transform.position, GoldEngine::game.render_delta);
+        Vec3f interpolated_position = entity.transform.old_position.Lerp(entity.transform.position, GoldEngine::render_delta);
         
         float[] model;
 		Matrix::MakeIdentity(model);

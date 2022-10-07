@@ -1,36 +1,32 @@
 
-#include "Components.as"
-#include "Scenes.as"
-
 class Game
 {
+    ComponentManager comp_manager; // here instead of inside scene, since they will be global in game
     Scene scene;
-    float render_delta;
     
     void Init()
     {
-        scene = Scene();
-
-        scene.PreInit();
+        comp_manager = ComponentManager();
+        scene = NewScene();
+        // edit after this
 
         CreateTestLevel(@scene);
-
-        scene.Init();
     }
 
     void Tick()
     {
-        render_delta = 0.0f;
         scene.Tick();
+        // edit after this
+        // or above, i dont care
+        
     }
 
     void Render()
     {
         if(scene is null) return;
 
-        if(Menu::getMainMenu() is null)
-            render_delta += getRenderApproximateCorrectionFactor();
-
         scene.Render();
+        // edit after this
+
     }
 }

@@ -3,6 +3,12 @@ void CreateTestLevel(Scene@ scene)
 {
     scene.camera.position = Vec3f(0, 1.5f, -4);
     scene.camera.angle = Quaternion();
+
+    {
+        Entity@ ent = scene.CreateEntity("world");
+        ent.AddComponent(MeshRendererComponent(leveltest));
+        //ent.AddComponent(StaticBodyComponent(@scene.physics_scene, @MeshBody(leveltest)));
+    }
     
     /*for(int i = 0; i < 20; i++)
     {
@@ -13,7 +19,7 @@ void CreateTestLevel(Scene@ scene)
         ent.SetPositionImmediate(Vec3f((i-10)*0.5f,Maths::Abs(i%5)*1.5f,Maths::Abs(i%5)*1.5f));
     }*/
 
-    {
+    /*{
         Entity@ ent = scene.CreateEntity("world");
         ent.AddComponent(MeshRendererComponent(leveltest));
         ent.AddComponent(StaticBodyComponent(@scene.physics_scene, @MeshBody(leveltest)));
@@ -25,7 +31,7 @@ void CreateTestLevel(Scene@ scene)
         ent.AddComponent(FPSCameraController());
 
         ent.SetPositionImmediate(Vec3f(0,10,0));
-    }
+    }*/
 }
 
 Vertex[] leveltest = {

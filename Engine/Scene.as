@@ -1,40 +1,46 @@
 
+#include "Scenes.as"
+
 class Scene
 {
 	Camera camera;
-	Entity@[] entities;
-	uint entity_id_tracker = 0;
 
-	comp_func@[] tickables;
-	comp_func@[] renderables; // make a custom class instead
+	EntityManager ent_manager;
+	//Entity@[] entities;
+	//uint entity_id_tracker = 0;
 
-	uint[] update_transforms;
+	//comp_func@[] tickables;
+	//comp_func@[] renderables; // make a custom class instead
 
-	PhysicsScene physics_scene;
+	//uint[] update_transforms;
+
+	//PhysicsScene physics_scene;
 
 	dictionary data;
 
 	void PreInit() // cant do this in constructor because of camera and phys world
 	{
-		entities.clear();
-		tickables.clear();
-		renderables.clear();
-
+		//entities.clear();
+		//tickables.clear();
+		//renderables.clear();
+		ent_manager = EntityManager(this);
 		camera = Camera(this);
-		physics_scene = PhysicsScene(this);
+		//physics_scene = PhysicsScene(this);
 	}
 
 	void Init()
 	{
-		for(uint i = 0; i < entities.size(); i++)
+		ent_manager.Init();
+		/*for(uint i = 0; i < entities.size(); i++)
 		{
 			entities[i].Init();
-		}
+		}*/
 	}
 
 	void Tick()
 	{
-		for(int i = 0; i < update_transforms.size(); i++)
+		ent_manager.Tick();
+		/*for(int i = 0; i < update_transforms.size(); i++)
 		{
 			entities[update_transforms[i]].UpdateTransforms();
 		}
@@ -45,7 +51,7 @@ class Scene
 		for(uint i = 0; i < tickables.size(); i++)
 		{
 			tickables[i]();
-		}
+		}*/
 	}
 
 	void Render()
@@ -62,34 +68,36 @@ class Scene
 
 		Render::SetViewTransform(camera.getViewMatrix());
 
-		physics_scene.DebugDraw();
+		ent_manager.Render();
+
+		//physics_scene.DebugDraw();
 
 		//Render::SetFog(color_black, SMesh::LINEAR, 0, 200, 0.5, true, true);
 
-		for(uint i = 0; i < renderables.size(); i++)
+		/*for(uint i = 0; i < renderables.size(); i++)
 		{
 			renderables[i]();
-		}
+		}*/
 	}
 
 	Entity@ CreateEntity(string name)
 	{
-		Entity entity = Entity(name, this);
+		return @ent_manager.CreateEntity(name);
+		/*Entity entity = Entity(name, this);
 		entity.id = entity_id_tracker++;
 		entities.push_back(@entity);
-		return @entity;
+		return @entity;*/
 	}
 
-	void UpdateTransforms(Entity@ entity)
+	/*void UpdateTransforms(Entity@ entity)
 	{
 		update_transforms.push_back(entity.id);
-	}
+	}*/
 
 	void AddComponent(Component@ component)
 	{
-		
-		
-		ITickable@ tickable = cast<ITickable>(component);
+		ent_manager.AddComponent(@component);
+		/*ITickable@ tickable = cast<ITickable>(component);
 		if(tickable !is null)
 		{
 			tickables.push_back(@comp_func(tickable.Tick));
@@ -105,6 +113,13 @@ class Scene
 		if(physical !is null)
 		{
 			physics_scene.AddPhysicsBody(@physical);
-		}
+		}*/
 	}
+}
+
+Scene NewScene() // haha :)
+{
+	Scene output = Scene();
+	output.PreInit();
+	return output;
 }
