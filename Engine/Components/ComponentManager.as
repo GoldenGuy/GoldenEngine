@@ -1,5 +1,7 @@
 
+#include "ComponentRegistrator.as"
 #include "Component.as"
+
 // defaults
 #include "Render_C.as"
 #include "MeshRenderer_C.as"
@@ -8,20 +10,56 @@
 //#include "StaticBody_C.as"
 //#include "FPSCameraController_C.as"
 //#include "FreeFlyMovement_C.as"
+
 // custom
 #include "Components.as"
 
 class ComponentManager
 {
-    uint comp_id_tracker = 0;
-    dictionary name_ids;
+    Component@[] tick;
+    Component@[] render;
+    Component@[] physics;
 
-    void RegisterComponent(Component@ comp)
+    ComponentManager()
     {
-        if(!name_ids.exists(comp.name))
+        tick.clear();
+        render.clear();
+        physics.clear();
+    }
+
+    void AddComponent(Component@ comp)
+    {
+        print("  comp ["+comp.name+"]");
+        if(comp.hasFlag(CompHooks::TICK))
         {
-            name_ids.set(comp.name, comp_id_tracker++);
+            print("    tick");
+            tick.push_back(@comp);
         }
-        name_ids.get(comp.name, comp.comp_id);
+        if(comp.hasFlag(CompHooks::RENDER))
+        {
+            print("    render");
+            render.push_back(@comp);
+        }
+        if(comp.hasFlag(CompHooks::PHYSICS))
+        {
+            print("    physics");
+            physics.push_back(@comp);
+        }
+    }
+
+    void Tick()
+    {
+        for(uint i = 0; i < tick.size(); i++)
+		{
+			tick[i].Tick();
+		}
+    }
+
+    void Render()
+    {
+        for(uint i = 0; i < render.size(); i++)
+		{
+			render[i].Render();
+		}
     }
 }

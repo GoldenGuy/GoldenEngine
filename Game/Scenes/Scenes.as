@@ -32,6 +32,8 @@ void CreateTestLevel(Scene@ scene)
 
         ent.SetPositionImmediate(Vec3f(0,10,0));
     }*/
+
+    scene.Init();
 }
 
 Vertex[] leveltest = {

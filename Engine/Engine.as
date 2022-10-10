@@ -1,10 +1,10 @@
 
 #include "Maths.as"
 #include "DefaultModels.as"
-#include "ComponentManager.as"
 #include "Transform.as"
 #include "Camera.as"
 #include "EntityManager.as"
+#include "ComponentManager.as"
 #include "Scene.as"
 //#include "PhysicsCommon.as"
 #include "Game.as"

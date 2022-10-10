@@ -2,13 +2,13 @@
 class Entity
 {
 	Scene@ scene;
-    uint id;
-    string name;
+    uint id = 0;
+    string name = "temp";
 	Transform transform;
-    bool update_transforms;
+    //bool update_transforms;
     Component@[] components;
 	dictionary data;
-    bool dead;
+    bool dead = false;
 	
 	Entity(string _name, Scene@ _scene)
     {
@@ -20,7 +20,7 @@ class Entity
 
 	void Init()
     {
-        update_transforms = false;
+        //update_transforms = false;
         for (uint i = 0; i < components.size(); i++)
         {
             components[i].Init();
@@ -39,11 +39,11 @@ class Entity
 
     void AddComponent(Component@ component, bool init = false)
     {
-        GoldEngine::game.comp_manager.RegisterComponent(@component);
+        GoldEngine::game.comp_register.RegisterComponent(@component);
         
         if(HasComponent(component))
         {
-            print("component "+component.name+" already added!!!");
+            print("entity ["+name+"] already has component ["+component.name+"] !!!");
             return;
         }
 
@@ -59,31 +59,19 @@ class Entity
     void SetPosition(Vec3f _position)
     {
         transform.position = _position;
-        /*if(!update_transforms)
-        {
-            scene.UpdateTransforms(this);
-        }*/
-        update_transforms = true;
+        scene.ent_manager.EntityChanged(@this);
     }
 
     void SetRotation(Quaternion _rotation)
     {
         transform.rotation = _rotation;
-        /*if(!update_transforms)
-        {
-            scene.UpdateTransforms(this);
-        }*/
-        update_transforms = true;
+        scene.ent_manager.EntityChanged(@this);
     }
 
     void SetScale(Vec3f _scale)
     {
         transform.scale = _scale;
-        /*if(!update_transforms)
-        {
-            scene.UpdateTransforms(this);
-        }*/
-        update_transforms = true;
+        scene.ent_manager.EntityChanged(@this);
     }
 
     void SetPositionImmediate(Vec3f _position)
@@ -106,7 +94,6 @@ class Entity
 
     void UpdateTransforms()
     {
-        update_transforms = false;
         transform.old_position = transform.position;
         transform.old_rotation = transform.rotation;
         transform.old_scale = transform.scale;

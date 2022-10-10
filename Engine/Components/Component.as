@@ -1,17 +1,18 @@
 
 enum CompHooks
 {
-    TICK = 0x000001,
-    RENDER = 0x000010,
-    PHYSICS = 0x000100
+    TICK = 1,
+    RENDER = 2,
+    PHYSICS = 4 //8, 16, 32
 }
 
 class Component
 {
-    u8 hooks;
-    uint comp_id;
-    string name;
+    uint hooks = 0;
+    uint comp_id = 0;
+    string name = "temp";
     Entity@ entity;
+    bool remove = false;
 
     bool opEquals(const Component&in other) const { return comp_id == other.comp_id; }
 
@@ -22,6 +23,11 @@ class Component
     void SetEntity(Entity@ _e)
     {
         @entity = @_e;
+    }
+
+    bool hasFlag(uint flag)
+    {
+        return (hooks & flag) != 0;
     }
 }
 

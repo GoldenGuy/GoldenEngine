@@ -1,12 +1,12 @@
 
 class Game
 {
-    ComponentManager comp_manager; // here instead of inside scene, since they will be global in game
+    ComponentRegistrator comp_register; // here instead of inside scene, since they will be global in game
     Scene scene;
     
     void Init()
     {
-        comp_manager = ComponentManager();
+        comp_register = ComponentRegistrator();
         scene = NewScene();
         // edit after this
 
