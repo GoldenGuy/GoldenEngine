@@ -94,8 +94,9 @@ class Entity
 
     void UpdateTransforms()
     {
-        transform.old_position = transform.position;
-        transform.old_rotation = transform.rotation;
-        transform.old_scale = transform.scale;
+        transform.UpdateOld();
+        //transform.old_position = transform.position;
+        //transform.old_rotation = transform.rotation;
+        //transform.old_scale = transform.scale;
     }
 }

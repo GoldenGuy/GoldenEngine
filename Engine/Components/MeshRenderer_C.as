@@ -13,7 +13,7 @@ class MeshRendererComponent : Component
 
     void Render()
     {
-        print("run");
+        //print("run");
         Vec3f interpolated_position = entity.transform.old_position.Lerp(entity.transform.position, GoldEngine::render_delta);
 
         float[] model;

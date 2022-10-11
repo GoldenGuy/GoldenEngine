@@ -9,6 +9,18 @@ void CreateTestLevel(Scene@ scene)
         ent.AddComponent(MeshRendererComponent(leveltest));
         //ent.AddComponent(StaticBodyComponent(@scene.physics_scene, @MeshBody(leveltest)));
     }
+
+    {
+        Entity@ ent = scene.CreateEntity("ball");
+        ent.AddComponent(MeshRendererComponent(RenderPrimitives::sphere));
+        ent.AddComponent(MoveComponent());
+    }
+
+    {
+        Entity@ ent = scene.CreateEntity("player camera");
+        ent.AddComponent(FPSCameraController());
+        ent.AddComponent(FreeFlyMovement());
+    }
     
     /*for(int i = 0; i < 20; i++)
     {

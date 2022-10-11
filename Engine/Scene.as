@@ -3,10 +3,10 @@
 
 class Scene
 {
-	Camera camera;
+	Camera@ camera;
 
-	EntityManager ent_manager;
-	ComponentManager comp_manager;
+	EntityManager@ ent_manager;
+	ComponentManager@ comp_manager;
 
 	//PhysicsScene physics_scene;
 
@@ -14,9 +14,9 @@ class Scene
 
 	void PreInit() // cant do this in constructor because of camera and phys world
 	{
-		ent_manager = EntityManager(this);
-		camera = Camera(this);
-		comp_manager = ComponentManager();
+		@ent_manager = @EntityManager(this);
+		@camera = @Camera(this);
+		@comp_manager = @ComponentManager();
 		//physics_scene = PhysicsScene(this);
 	}
 
@@ -27,7 +27,10 @@ class Scene
 
 	void Tick()
 	{
+		ent_manager.UpdateTransforms();
 		comp_manager.Tick();
+
+		//print("count: "+comp_manager.tick.size());
 	}
 
 	void Render()
@@ -54,9 +57,7 @@ class Scene
 
 	void AddComponent(Component@ component)
 	{
-		print("sus "+comp_manager.render.size());
 		comp_manager.AddComponent(@component);
-		print("sus "+comp_manager.render.size());
 	}
 }
 
