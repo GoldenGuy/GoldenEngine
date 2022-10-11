@@ -11,10 +11,17 @@ void CreateTestLevel(Scene@ scene)
     }
 
     {
+        Entity@ ent = scene.CreateEntity("fumo");
+        ent.AddComponent(ObjRendererComponent("improved_fumo.obj"));
+        ent.SetPositionImmediate(Vec3f(0,4,0));
+        //ent.AddComponent(MoveComponent());
+    }
+
+    /*{
         Entity@ ent = scene.CreateEntity("ball");
         ent.AddComponent(MeshRendererComponent(RenderPrimitives::sphere));
         ent.AddComponent(MoveComponent());
-    }
+    }*/
 
     {
         Entity@ ent = scene.CreateEntity("player camera");

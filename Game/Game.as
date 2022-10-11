@@ -19,6 +19,13 @@ class Game
         // edit after this
         // or above, i dont care
         
+        if(getGameTime() % 10 == 1)
+        {
+            Entity@ ent = scene.CreateEntity("fymo");
+            ent.AddComponent(ObjRendererComponent("improved_fumo.obj"));//MeshRendererComponent(RenderPrimitives::sphere));
+            ent.AddComponent(MoveComponent());
+            ent.Init();
+        }
     }
 
     void Render()
@@ -47,7 +54,7 @@ class Game
 
         Vec2f dim;
         GUI::GetTextDimensions(debug, dim);
-        dim.y *= 0.72f;
+        dim.y *= 0.76f;
         dim.x += 6;
         GUI::DrawRectangle(start, start+dim, SColor(190, 100, 100, 100));
         GUI::DrawText(debug, start, SColor(190, 0, 70, 0));
@@ -69,7 +76,7 @@ class Game
             debug += "    ["+scene.comp_manager.physics[i].name+"]\n";
         }
 
-        start.y += dim.y + 12;
+        start.x += dim.x + 12;
 
         GUI::GetTextDimensions(debug, dim);
         dim.y *= 0.76f;
