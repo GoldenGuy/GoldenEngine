@@ -44,17 +44,6 @@ class FPSCameraController : Component
                 yaw += 360;
             }
         }
-        
-        if(getControls().isKeyJustPressed(KEY_RSHIFT))
-        {
-            for(int i = 0; i < entity.scene.ent_manager.entities.size(); i++)
-            {
-                if(entity.scene.ent_manager.entities[i] !is null && entity.scene.ent_manager.entities[i].name == "fymo")
-                {
-                    entity.scene.ent_manager.entities[i].Kill();
-                }
-            }
-        }
     }
 
     void Render()

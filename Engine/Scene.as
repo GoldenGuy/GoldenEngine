@@ -3,26 +3,20 @@
 
 class Scene
 {
-	Camera@ camera;
+	Camera camera;
 
-	EntityManager@ ent_manager;
-	RenderEngine@ renderer;
-	PhysicsEngine@ physics;
-	
-	//ComponentManager@ comp_manager; //nope, separate classes for each component type instead
-
-	//PhysicsScene physics_scene;
+	EntityManager ent_manager;
+	RenderEngine renderer;
+	PhysicsEngine physics;
 
 	dictionary data;
 
 	void PreInit() // cant do this in constructor because sublcasses need this class already instanced
 	{
-		@camera = @Camera(this);
-		@ent_manager = @EntityManager(this);
-		@renderer = @RenderEngine(this);
-		@physics = @PhysicsEngine(this);
-		//@comp_manager = @ComponentManager();
-		//physics_scene = PhysicsScene(this);
+		camera = Camera(this);
+		ent_manager = EntityManager(this);
+		renderer = RenderEngine(this);
+		physics = PhysicsEngine(this);
 	}
 
 	void Init()
@@ -33,10 +27,6 @@ class Scene
 	void Tick()
 	{
 		ent_manager.Tick();
-		//ent_manager.UpdateTransforms();
-		//comp_manager.Tick();
-
-		//print("count: "+comp_manager.tick.size());
 	}
 
 	void Render()
@@ -54,7 +44,6 @@ class Scene
 		Render::SetViewTransform(camera.getViewMatrix());
 
 		renderer.Render();
-		//comp_manager.Render();
 	}
 
 	Entity@ CreateEntity(string name)
@@ -64,23 +53,18 @@ class Scene
 
 	void AddComponent(Component@ component)
 	{
-		print("  comp ["+component.name+"]");
-        if(component.hasFlag(CompHooks::TICK))
+		if(component.hasFlag(CompHooks::TICK))
         {
-            print("    tick");
             ent_manager.AddComponent(@component);
         }
         if(component.hasFlag(CompHooks::RENDER))
         {
-            print("    render");
             renderer.AddComponent(@component);
         }
         if(component.hasFlag(CompHooks::PHYSICS))
         {
-            print("    physics");
             physics.AddComponent(@component);
         }
-		//comp_manager.AddComponent(@component);
 	}
 }
 

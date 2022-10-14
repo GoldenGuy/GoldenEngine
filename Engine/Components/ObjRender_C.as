@@ -33,4 +33,10 @@ class ObjRendererComponent : Component
         //Render::RawTriangles("default.png", RenderPrimitives::sphere);
         mesh.RenderMeshWithMaterial();
     }
+
+    void Destroy()
+    {
+        mesh.DropMesh();
+        mesh.Clear();
+    }
 }

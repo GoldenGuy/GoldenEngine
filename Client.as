@@ -6,8 +6,7 @@
 void onInit(CRules@ this)
 {
 	print("Client init");
-	int id = Render::addScript(Render::layer_prehud, "Client.as", "Render", 0);
-	this.set_u32("render_id", id);
+	this.set_u32("render_id", -1);
 	onReload(this);
 }
 
@@ -15,7 +14,8 @@ void onReload(CRules@ this)
 {
 	GoldEngine::Init();
 	int id = this.get_u32("render_id");
-	Render::RemoveScript(id);
+	if(id != -1)
+		Render::RemoveScript(id);
 	id = Render::addScript(Render::layer_prehud, "Client.as", "Render", 0);
 	this.set_u32("render_id", id);
 }

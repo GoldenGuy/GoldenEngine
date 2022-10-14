@@ -18,6 +18,9 @@ class PhysicsEngine
                 physics_components.removeAt(i);
                 i--;
             }
+
+            // now her is the tricky part...
+            
             //else
             //    physics_components[i].Physics();
 		}

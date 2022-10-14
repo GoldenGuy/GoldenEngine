@@ -7,7 +7,7 @@ class EntityManager
     Scene@ scene;
     Entity@[] entities;
     uint ents_size;
-    Entity@[] transform_update;
+    uint[] transform_update;
     Component@[] tick_components;
 
     EntityManager(Scene@ _s)
@@ -61,15 +61,14 @@ class EntityManager
     {
         for(uint i = 0; i < transform_update.size(); i++)
 		{
-			if(!transform_update[i].dead)
-                transform_update[i].UpdateTransforms();//transform.UpdateOld();
+			entities[transform_update[i]].UpdateTransforms();
 		}
         transform_update.clear();
     }
 
     void EntityChanged(Entity@ ent)
     {
-        transform_update.push_back(@ent);
+        transform_update.push_back(ent.id);
     }
 
     Entity@ CreateEntity(string name)
@@ -78,7 +77,6 @@ class EntityManager
 		entity.id = ents_size;
 		@entities[ents_size] = @entity;
         ents_size++;
-        print("ent ["+name+"]");
 		return @entity;
     }
 

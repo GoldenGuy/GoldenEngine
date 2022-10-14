@@ -1,16 +1,17 @@
 
 class Game
 {
-    ComponentRegistrator@ comp_register; // here instead of inside scene, since they will be global in game
-    Scene@ scene = null;
+    ComponentRegistrator comp_register; // here instead of inside scene, since they will be global in game
+    Scene scene;
     
     void Init()
     {
-        @comp_register = @ComponentRegistrator();
-        @scene = @NewScene();
+        scene.PreInit();
         // edit after this
 
         CreateTestLevel(@scene);
+
+        scene.Init();
     }
 
     void Tick()
@@ -18,13 +19,24 @@ class Game
         scene.Tick();
         // edit after this
         // or above, i dont care
-        
-        if(getGameTime() % 10 == 1)
+
+        if(getControls().isKeyJustPressed(KEY_RSHIFT))
         {
             Entity@ ent = scene.CreateEntity("fymo");
-            ent.AddComponent(ObjRendererComponent("improved_fumo.obj"));//MeshRendererComponent(RenderPrimitives::sphere));
+            ent.AddComponent(ObjRendererComponent("improved_fumo.obj"));
             ent.AddComponent(MoveComponent());
             ent.Init();
+        }
+
+        if(getControls().isKeyJustPressed(KEY_RCONTROL))
+        {
+            for(uint i = 0; i < scene.ent_manager.entities.size(); i++)
+            {
+                if(scene.ent_manager.entities[i] !is null && scene.ent_manager.entities[i].name == "fymo")
+                {
+                    scene.ent_manager.entities[i].Destroy();
+                }
+            }
         }
     }
 

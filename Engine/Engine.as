@@ -1,5 +1,6 @@
 
 #include "Maths.as"
+#include "Debug.as"
 #include "DefaultModels.as"
 #include "Transform.as"
 #include "Camera.as"
@@ -13,14 +14,14 @@
 
 namespace GoldEngine
 {
-	float render_delta;
+	float render_delta = 0.0f;
 	
 	Game@ game;
 	
 	void Init()
 	{
-		Game newgame = Game();
-		@game = @newgame;
+		Print("Init", PrintColor::GRN);
+		@game = @Game();
 		SaveToRules();
 		game.Init();
 	}

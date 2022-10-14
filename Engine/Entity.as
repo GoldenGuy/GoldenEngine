@@ -3,7 +3,7 @@ class Entity
 {
 	Scene@ scene;
     uint id = 0;
-    string name = "temp";
+    string name = "none";
 	Transform transform;
     //bool update_transforms;
     Component@[] components;
@@ -21,6 +21,7 @@ class Entity
 	void Init()
     {
         //update_transforms = false;
+        //Print(name+" init", PrintColor::YLW);
         for (uint i = 0; i < components.size(); i++)
         {
             components[i].Init();
@@ -39,7 +40,7 @@ class Entity
 
     void AddComponent(Component@ component, bool init = false)
     {
-        GoldEngine::game.comp_register.RegisterComponent(@component);
+        GoldEngine::game.comp_register.RegisterComponent(component);
         
         if(HasComponent(component))
         {
@@ -47,9 +48,9 @@ class Entity
             return;
         }
 
-        @component.entity = @this;
-
         components.push_back(component);
+
+        component.SetEntity(this);
 
         scene.AddComponent(component);
 
@@ -95,17 +96,16 @@ class Entity
     void UpdateTransforms()
     {
         transform.UpdateOld();
-        //transform.old_position = transform.position;
-        //transform.old_rotation = transform.rotation;
-        //transform.old_scale = transform.scale;
     }
 
-    void Kill()
+    void Destroy()
     {
         dead = true;
         for (uint i = 0; i < components.size(); i++)
         {
             components[i].remove = true;
+            components[i].Destroy();
         }
+        components.clear(); //hmm, should i?
     }
 }

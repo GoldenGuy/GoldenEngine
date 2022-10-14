@@ -33,6 +33,7 @@ class Component
     void Init(){}
     void Tick(){}
     void Render(){}
+    void Destroy(){}
 
     void SetEntity(Entity@ _e)
     {
