@@ -1,5 +1,5 @@
 
-#include "ComponentRegistrator.as"
+/*#include "ComponentRegistrator.as"
 #include "Component.as"
 
 // defaults
@@ -62,4 +62,4 @@ class ComponentManager
 			render[i].Render();
 		}
     }
-}
+}*/

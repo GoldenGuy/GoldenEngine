@@ -4,11 +4,11 @@ const uint MAX_ENTITIES = 1000;
 
 class EntityManager
 {
-    //uint ent_id_tracker = 0;
     Scene@ scene;
     Entity@[] entities;
     uint ents_size;
     Entity@[] transform_update;
+    Component@[] tick_components;
 
     EntityManager(Scene@ _s)
     {
@@ -25,6 +25,36 @@ class EntityManager
 		{
 			entities[i].Init();
 		}
+    }
+
+    void Tick()
+    {
+        UpdateTransforms();
+
+        for(uint i = 0; i < ents_size; i++)
+        {
+            if(entities[i].dead)
+            {
+                RemoveEntity(@entities[i]);
+                i--;
+            }
+        }
+
+        for(uint i = 0; i < tick_components.size(); i++)
+		{
+			if(tick_components[i].remove)
+            {
+                tick_components.removeAt(i);
+                i--;
+            }
+            else
+                tick_components[i].Tick();
+		}
+    }
+
+    void AddComponent(Component@ component)
+	{
+        tick_components.push_back(@component);
     }
 
     void UpdateTransforms()

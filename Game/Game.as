@@ -60,20 +60,20 @@ class Game
         GUI::DrawText(debug, start, SColor(190, 0, 70, 0));
 
         debug = "components:\n";
-        debug += "  tick ("+scene.comp_manager.tick.size()+"):\n";
-        for(int i = 0; i < scene.comp_manager.tick.size(); i++)
+        debug += "  tick ("+scene.ent_manager.tick_components.size()+"):\n";
+        for(int i = 0; i < scene.ent_manager.tick_components.size(); i++)
         {
-            debug += "    ["+scene.comp_manager.tick[i].name+"]\n";
+            debug += "    ["+scene.ent_manager.tick_components[i].name+"]\n";
         }
-        debug += "\n  render ("+scene.comp_manager.render.size()+"):\n";
-        for(int i = 0; i < scene.comp_manager.render.size(); i++)
+        debug += "\n  render ("+scene.renderer.render_components.size()+"):\n";
+        for(int i = 0; i < scene.renderer.render_components.size(); i++)
         {
-            debug += "    ["+scene.comp_manager.render[i].name+"]\n";
+            debug += "    ["+scene.renderer.render_components[i].name+"]\n";
         }
-        debug += "\n  physics ("+scene.comp_manager.physics.size()+"):\n";
-        for(int i = 0; i < scene.comp_manager.physics.size(); i++)
+        debug += "\n  physics ("+scene.physics.physics_components.size()+"):\n";
+        for(int i = 0; i < scene.physics.physics_components.size(); i++)
         {
-            debug += "    ["+scene.comp_manager.physics[i].name+"]\n";
+            debug += "    ["+scene.physics.physics_components[i].name+"]\n";
         }
 
         start.x += dim.x + 12;

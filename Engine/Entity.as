@@ -99,4 +99,13 @@ class Entity
         //transform.old_rotation = transform.rotation;
         //transform.old_scale = transform.scale;
     }
+
+    void Kill()
+    {
+        dead = true;
+        for (uint i = 0; i < components.size(); i++)
+        {
+            components[i].remove = true;
+        }
+    }
 }
