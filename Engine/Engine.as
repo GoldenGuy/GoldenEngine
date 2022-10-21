@@ -9,7 +9,6 @@
 #include "PhysicsEngine.as"
 #include "Component.as"
 #include "Scene.as"
-//#include "PhysicsCommon.as"
 #include "Game.as"
 
 namespace GoldEngine
