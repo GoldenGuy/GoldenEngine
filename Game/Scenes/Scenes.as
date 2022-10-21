@@ -7,20 +7,24 @@ void CreateTestLevel(Scene@ scene)
     {
         Entity@ ent = scene.CreateEntity("world");
         ent.AddComponent(MeshRendererComponent(leveltest));
+        ent.AddComponent(PhysicsComponent(PhysicsComponentType::STATIC, MeshBody(leveltest)));
         //ent.AddComponent(StaticBodyComponent(@scene.physics_scene, @MeshBody(leveltest)));
     }
 
-    {
+    /*{
         Entity@ ent = scene.CreateEntity("ball");
         ent.AddComponent(MeshRendererComponent(RenderPrimitives::sphere));
+        ent.AddComponent(PhysicsComponent(PhysicsComponentType::DYNAMIC, SphereBody(2)));
         ent.SetPositionImmediate(Vec3f(0,4,0));
-    }
+    }*/
 
-    for(int i = 0; i < 2; i++)
+    for(int i = 0; i < 4; i++)
     {
         Entity@ ent = scene.CreateEntity("fymo");
         ent.AddComponent(ObjRendererComponent("improved_fumo.obj"));
-        ent.AddComponent(MoveComponent());
+        ent.AddComponent(PhysicsComponent(PhysicsComponentType::DYNAMIC, SphereBody(1)));
+        //ent.AddComponent(MoveComponent());
+        ent.SetPositionImmediate(Vec3f(i,4,i*2));
     }
 
     {

@@ -49,6 +49,15 @@ class Game
 
         Render::ClearZ();
 
+        /*for(int i = 0; i < scene.physics.physics_components.size(); i++)
+        {
+            if(scene.physics.physics_components[i].type == PhysicsComponentType::DYNAMIC)
+            {
+                PhysicsComponent@ phy_comp = @scene.physics.physics_components[i];
+
+            }
+        }*/
+
         Vec2f start = Vec2f(6,6);
 
         GUI::SetFont("none");

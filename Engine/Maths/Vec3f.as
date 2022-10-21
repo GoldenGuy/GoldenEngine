@@ -39,6 +39,8 @@ class Vec3f
 		z = len * vec.z;
 	}
 	
+	Vec3f opNeg() const { return Vec3f(x, y, z) * (-1); }
+	
 	Vec3f opAdd(const Vec3f&in oof) const { return Vec3f(x + oof.x, y + oof.y, z + oof.z); }
 	
 	Vec3f opAdd(float oof) const { return Vec3f(x + oof, y + oof, z + oof); }
