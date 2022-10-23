@@ -25,7 +25,6 @@ class PhysicsComponent : Component
 {
     uint phy_id;
     
-    //AABBOctreeNode@[] nodes_occupied;
     ComponentBodyPair@[]@[] buckets_occupied; // for dynamics only
     
     PhysicsComponentType type;
@@ -58,17 +57,9 @@ class PhysicsComponent : Component
         velocity = Vec3f_ZERO;
     }
 
-    void Physics()// only happens when dynamic
+    void Physics(ResponseResult@ result) // only happens when dynamic
     {
-        //PhysicsEngine@ phys_engine = @entity.scene.physics;
-        //ComponentBodyPair@[]@ colliders = @phys_engine.getNearbyColliders(@this);
-        //if(colliders.size() == 0)
-            //entity.SetPosition(entity.transform.position + Vec3f(0,-phy_id*0.01f,0));
-        //print("colliders: "+colliders.size());
-        //for(int i = 0; i < colliders.size(); i++)
-        //{
-            
-        //}
+        
     }
 
     AABB getBounds()
@@ -337,112 +328,6 @@ class SpatialHash
 
 // -----------------------------------------------------------------------------------------
 
-// dynamics octree stuff -------------------------------------------------------------------
-
-/*const float MIN_OCTR_SIZE = 16; //64
-
-class AABBOctree
-{
-    Vec3f position;
-    float size; //1024 // 4096
-    
-    AABBOctreeNode root_node;
-
-    AABBOctree(Vec3f _pos, float _size)
-    {
-        position = _pos;
-        size = _size;
-        root_node = AABBOctreeNode(_pos, _size);
-    }
-
-    void Build(PhysicsComponent@[] objects)
-    {
-        root_node = AABBOctreeNode(position, size);
-
-        int size = objects.size();
-        for(int i = 0; i < size; i++)
-        {
-            PhysicsComponent@ comp = @objects[i];
-            if(comp.type == PhysicsComponentType::DYNAMIC)
-            {
-                //comp.nodes_occupied.clear();
-                root_node.Add(@comp, comp.getBounds());
-            }
-        }
-    }
-}
-
-class AABBOctreeNode
-{
-    Vec3f position;
-    float size;
-    AABB box;
-    PhysicsComponent@[] dynamics;
-
-    AABBOctreeNode@[] children;
-
-    int count = 0;
-    bool empty = true;
-    bool leaf = false;
-
-    AABBOctreeNode(Vec3f _pos, float _size)
-    {
-        position = _pos;
-        size = _size;
-        box = AABB(position, size);
-        //children.clear();
-        dynamics.clear();
-        count = 0;
-        empty = true;
-
-        if(_size > MIN_OCTR_SIZE)
-        {
-            //children.resize(8);
-
-            float sub_size = size / 2.0f;
-            Vec3f sub_pos = position + sub_size;
-
-            array<AABBOctreeNode@> _children = {    @AABBOctreeNode(position, sub_size),
-                                                    @AABBOctreeNode(Vec3f(sub_pos.x, position.y, position.z), sub_size),
-                                                    @AABBOctreeNode(Vec3f(position.x, sub_pos.y, position.z), sub_size),
-                                                    @AABBOctreeNode(Vec3f(sub_pos.x, sub_pos.y, position.z), sub_size),
-                                                    @AABBOctreeNode(Vec3f(position.x, position.y, sub_pos.z), sub_size),
-                                                    @AABBOctreeNode(Vec3f(sub_pos.x, position.y, sub_pos.z), sub_size),
-                                                    @AABBOctreeNode(Vec3f(position.x, sub_pos.y, sub_pos.z), sub_size),
-                                                    @AABBOctreeNode(Vec3f(sub_pos.x, sub_pos.y, sub_pos.z), sub_size)
-                                                };
-            children = _children;
-
-            leaf = false;
-        }
-
-        else
-            leaf = true;
-    }
-
-    bool Add(PhysicsComponent@ comp, AABB bounds)
-    {
-        if(leaf)
-        {
-            if(box.Intersects(bounds))
-            {
-                dynamics.push_back(@comp);
-                //comp.nodes_occupied.push_back(@this);
-                empty = false;
-                return true;
-            }
-        }
-        for(int i = 0; i < 8; i++)
-        {
-            children[i].Add(@comp, bounds);
-                //empty = false;
-        }
-        return false;
-    }
-}*/
-
-// -----------------------------------------------------------------------------------------
-
 // common 
 
 class ComponentBodyPair
@@ -465,6 +350,7 @@ class CollisionData
     bool inside;
     Vec3f start_pos;
     Vec3f vel;
+    Vec3f other_vel;
 	Vec3f intersect_point;
 	Vec3f intersect_normal;
     Vec3f push_out;
@@ -477,12 +363,26 @@ class CollisionData
         inside = false;
         start_pos = _start_pos;
         vel = _velocity;
+        other_vel = Vec3f_ZERO;
 		intersect_point = Vec3f();
 		intersect_normal = Vec3f();
         push_out = Vec3f();
 		t = 1.0f;
 		//collision_type = -1;
 	}
+}
+
+class ResponseResult
+{
+    bool needed;
+    uint id;
+    Vec3f new_position;
+    Vec3f new_velocity;
+
+    ResponseResult()
+    {
+        needed = false;
+    }
 }
 
 void SphereTriangleCollision(CollisionData@ data, Vec3f triangle_v1, Vec3f triangle_v2, Vec3f triangle_v3)
@@ -619,4 +519,38 @@ bool PointInsideTriangle(Vec3f point, Vec3f a, Vec3f b, Vec3f c)
 		float v = (dot00 * dot12 - dot01 * dot02) * invDenom;
 
 		return ((u >= 0.0f) && (v >= 0.0f) && (u + v < 1.0f));
+}
+
+void RaySphereCollision(CollisionData@ data, float sphere_radius)
+{
+    Vec3f oc = data.start_pos;
+    if(oc.Length() < sphere_radius)
+    {
+        //data.intersect = false;
+        data.inside = true;
+        //data.t = (oc.Length() / sphere_radius)-1.0f;
+        //data.intersect_point = Vec3f();
+        data.push_out = data.start_pos.Normal();
+        return;
+    }
+    float b = oc.Dot(data.vel.Normal());
+    float c = oc.Dot(oc) - sphere_radius*sphere_radius;
+    float h = b*b - c;
+    if(h<0.0) // no intersection
+    {
+        //print("h: " + h);
+        return;
+    }
+    h = Maths::Sqrt( h );
+    float dist = -b-h;
+    float time = 1.0f-(dist / data.vel.Length());
+    //float vel_length = data.vel.Length();
+    //if(dist > 0.0 && data.t > dist)
+    if(time > 0.0f && time < 1.0f && data.t > time)
+    {
+        //print("time: " + time);
+        data.t = time;
+        data.intersect_point = Vec3f();
+        data.intersect = true;
+    }
 }

@@ -29,8 +29,6 @@ class EntityManager
 
     void Tick()
     {
-        UpdateTransforms();
-
         for(uint i = 0; i < ents_size; i++)
         {
             if(entities[i].dead)

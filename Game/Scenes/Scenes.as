@@ -1,36 +1,29 @@
 
 void CreateTestLevel(Scene@ scene)
 {
-    scene.camera.position = Vec3f(0, 1.5f, -4);
-    scene.camera.angle = Quaternion();
+    //scene.camera.position = Vec3f(0, -6.5f, -4);
+    scene.camera.angle = Quaternion(-0.212f, 0.673f, -0.210f, -0.676f);
 
     {
         Entity@ ent = scene.CreateEntity("world");
         ent.AddComponent(MeshRendererComponent(leveltest));
         ent.AddComponent(PhysicsComponent(PhysicsComponentType::STATIC, MeshBody(leveltest)));
-        //ent.AddComponent(StaticBodyComponent(@scene.physics_scene, @MeshBody(leveltest)));
     }
 
-    /*{
-        Entity@ ent = scene.CreateEntity("ball");
-        ent.AddComponent(MeshRendererComponent(RenderPrimitives::sphere));
-        ent.AddComponent(PhysicsComponent(PhysicsComponentType::DYNAMIC, SphereBody(2)));
-        ent.SetPositionImmediate(Vec3f(0,4,0));
-    }*/
-
-    for(int i = 0; i < 4; i++)
+    for(int i = 0; i < 20; i++)
     {
         Entity@ ent = scene.CreateEntity("fymo");
-        ent.AddComponent(ObjRendererComponent("improved_fumo.obj"));
-        ent.AddComponent(PhysicsComponent(PhysicsComponentType::DYNAMIC, SphereBody(1)));
-        //ent.AddComponent(MoveComponent());
-        ent.SetPositionImmediate(Vec3f(i,4,i*2));
+        //ent.AddComponent(ObjRendererComponent("improved_fumo.obj"));
+        ent.AddComponent(MeshRendererComponent(RenderPrimitives::sphere));
+        ent.AddComponent(DynamicBodyComponent(SphereBody(1)));
+        ent.SetPositionImmediate(Vec3f(i%5-3,10+(i/10)*2,(i-5)%10));
     }
 
     {
         Entity@ ent = scene.CreateEntity("player camera");
         ent.AddComponent(FPSCameraController());
         ent.AddComponent(FreeFlyMovement());
+        ent.SetPositionImmediate(Vec3f(14, 12, 0));
     }
 }
 

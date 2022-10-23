@@ -4,7 +4,7 @@
 uint comp_id = 0;
 
 Vec3f gravity = Vec3f(0.0, -9.81, 0.0);
-Vec3f gravity_force = gravity / 1080.0f;
+Vec3f gravity_force = gravity / 900.0f; // 30 ticks squared
 
 class PhysicsEngine
 {
@@ -12,28 +12,19 @@ class PhysicsEngine
     PhysicsComponent@[] physics_components;
     SpatialHash statics_spatial_hash;
     SpatialHash dynamics_spatial_hash;
-    //SpatialHash temp_empty_copy;
-    //AABBOctree dynamics_octree;
-    //AABBOctree temp_empty_octree;
-
-    // for static spatial partitioning
-    // for dynamic (octree)
+    ResponseResult@[] results;
 
     PhysicsEngine(Scene@ _s)
     {
         @scene = @_s;
         statics_spatial_hash = SpatialHash(2);
         dynamics_spatial_hash = SpatialHash(2);
-        //temp_empty_copy = statics_spatial_hash;
-        //dynamics_octree = AABBOctree(Vec3f(-128,-128,-128), 256);
-        //temp_empty_octree = dynamics_octree;
     }
 
     void Physics()
     {
-        //dynamics_octree = temp_empty_octree;
-        //dynamics_octree.Build(physics_components);
         dynamics_spatial_hash.Clear();
+        results.clear();
         for(int i = 0; i < physics_components.size(); i++)
         {
             PhysicsComponent@ comp = @physics_components[i];
@@ -51,27 +42,34 @@ class PhysicsEngine
                 physics_components.removeAt(i);
                 i--;
             }
-
-            // now her is the tricky part...
             
             else if (physics_components[i].type == PhysicsComponentType::DYNAMIC)
-                physics_components[i].Physics();
+            {
+                ResponseResult result;
+                result.id = i;
+                physics_components[i].Physics(@result);
+                if(result.needed)
+                {
+                    results.push_back(@result);
+                }
+            }
 		}
-    }
 
-    /*ComponentBodyPair@[] getNearbyStatics(PhysicsComponent@ comp)
-    {
-        ComponentBodyPair@[] output;
-        AABB bounds = comp.getBounds();
-        statics_spatial_hash.getIn(bounds, @output);
-        return output;
-    }*/
+        for(int i = 0; i < results.size(); i++)
+        {
+            ResponseResult@ result = @results[i];
+            physics_components[result.id].entity.SetPosition(result.new_position);
+            physics_components[result.id].velocity = result.new_velocity;
+        }
+    }
 
     ComponentBodyPair@[]@ getNearbyColliders(PhysicsComponent@ comp) // only for dynamics!
     {
         dictionary copy_buffer;
         ComponentBodyPair@[] output;
         AABB bounds = comp.getBounds();
+        bounds = bounds + (bounds + comp.velocity); // account for movement
+
         // get the statics
         statics_spatial_hash.getIn(bounds, @output);
 
@@ -114,6 +112,27 @@ class PhysicsEngine
             data.start_pos *= sphere.radius;
             data.vel *= sphere.radius;
         }
+        /*else if (first.type == BodyType::SPHERE && second.type == BodyType::SPHERE)
+        {
+            SphereBody@ sphere = cast<SphereBody>(first);
+            SphereBody@ other_sphere = cast<SphereBody>(second);
+            data.start_pos /= sphere.radius;
+            data.vel -= data.other_vel;
+            data.vel /= sphere.radius;
+            RaySphereCollision(data, other_sphere.radius+1.0f);
+            if(data.intersect)
+            {
+                data.intersect_point *= sphere.radius;
+            }
+            if(data.inside)
+            {
+                data.push_out *= sphere.radius;
+                data.push_out.Normalize();
+            }
+            data.start_pos *= sphere.radius;
+            data.vel += data.other_vel;
+            data.vel *= sphere.radius;
+        }*/
         /*switch (other.shape)
         {
             case BodyShape::TRIANGLE:

@@ -15,6 +15,24 @@ class AABB
         max = start + size;
     }
 
+    AABB opAdd(AABB oof) const
+    {
+        float x_min = Maths::Min(min.x, oof.min.x);
+        float y_min = Maths::Min(min.y, oof.min.y);
+        float z_min = Maths::Min(min.z, oof.min.z);
+
+        float x_max = Maths::Max(max.x, oof.max.x);
+        float y_max = Maths::Max(max.y, oof.max.y);
+        float z_max = Maths::Max(max.z, oof.max.z);
+
+        return AABB(Vec3f(x_min, y_min, z_min), Vec3f(x_max, y_max, z_max));
+    }
+
+    AABB opAdd(Vec3f oof) const
+    {
+        return AABB(min+oof, max+oof);
+    }
+
     void opMulAssign(const Vec3f&in oof) { min *= oof; max *= oof; }
     void opAddAssign(const Vec3f&in oof) { min += oof; max += oof; }
 

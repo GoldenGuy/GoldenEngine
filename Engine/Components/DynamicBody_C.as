@@ -1,8 +1,7 @@
 
 class DynamicBodyComponent : PhysicsComponent
 {
-    //Vec3f velocity;
-	float friction;
+    float friction;
 	float bounce;
     bool sleeping;
 	bool grounded;
@@ -20,10 +19,8 @@ class DynamicBodyComponent : PhysicsComponent
 		grounded = false;
 	}
 
-	void Physics()
+	void Physics(ResponseResult@ result)
 	{
-		//ResolutionResult result = ResolutionResult();
-
 		bool do_push = false;
 		Vec3f push_amount = Vec3f();
 
@@ -63,6 +60,7 @@ class DynamicBodyComponent : PhysicsComponent
 				//	continue;
 				CollisionData _data = data;
 				_data.start_pos -= other.entity.transform.position;
+				_data.other_vel = other.velocity;
 				
 				entity.scene.physics.Collide(@body, @colliders[i].body, @_data);
 
@@ -163,19 +161,19 @@ class DynamicBodyComponent : PhysicsComponent
 			}
 		}
 
-		new_vel += push_amount*0.005f;
+		new_vel += push_amount*0.002f;
 		//new_vel += push_amount.Normal()*0.01f;
 
 		if(!grounded)
 			new_vel += gravity_force;
 
-		//result.needed = true;
+		result.needed = true;
 		//result.id = physics_id;
-		//result.new_position = dest;
-		//result.new_velocity = new_vel;
+		result.new_position = dest;
+		result.new_velocity = new_vel;
 
 		//return result;
-		entity.SetPosition(dest);
-		velocity = new_vel;
+		//entity.SetPosition(dest);
+		//velocity = new_vel;
 	}
 }
