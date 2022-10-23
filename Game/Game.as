@@ -48,35 +48,6 @@ class Game
         scene.Render();
         // edit after this
 
-        float[] model;
-        Matrix::MakeIdentity(model);
-        Render::SetModelTransform(model);
-
-        Render::SetBackfaceCull(false);
-        //DrawAABB(AABB(Vec3f(-2), Vec3f(2)), SColor(0xFFFF00FF));
-        //DrawAABB(scene.physics.dynamics_octree.root_node.box, SColor(0xFFFF00FF));
-        //traverse_octree_and_draw_box(@scene.physics.dynamics_octree.root_node);
-        int skip = 3;
-        for(int i = 0; i < scene.physics.physics_components.size(); i++)
-        {
-            if(scene.physics.physics_components[i].type == PhysicsComponentType::DYNAMIC)
-            {
-                if(skip != 0)
-                {
-                    skip--;
-                    continue;
-                }
-                PhysicsComponent@ phy_comp = @scene.physics.physics_components[i];
-                ComponentBodyPair@[]@ colliders = @scene.physics.getNearbyColliders(@phy_comp);
-                for(int j = 0; j < colliders.size(); j++)
-                {
-                    DrawAABB(colliders[j].bounds, SColor(0xFFFF00FF));
-                }
-                break;
-            }
-        }
-
-
         Render::ClearZ();
 
         Vec2f start = Vec2f(6,6);
