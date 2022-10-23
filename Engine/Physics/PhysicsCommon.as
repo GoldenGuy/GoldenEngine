@@ -7,7 +7,7 @@ enum BodyType
     POINT,
     PLANE,
     TRIANGLE,
-    MESH,
+    MESH, // should never be dynamic, sorry
     POLYGON,
     SPHERE,
     ELLIPSOID,
@@ -23,7 +23,10 @@ enum PhysicsComponentType
 
 class PhysicsComponent : Component
 {
-    AABBOctreeNode@[] nodes_occupied;
+    uint phy_id;
+    
+    //AABBOctreeNode@[] nodes_occupied;
+    ComponentBodyPair@[]@[] buckets_occupied; // for dynamics only
     
     PhysicsComponentType type;
     PhysicsBody@ body;
@@ -38,16 +41,33 @@ class PhysicsComponent : Component
         type = _type;
         @body = @_body;
 
+        if(body.type == BodyType::MESH)
+        {
+            MeshBody@ mesh = cast<MeshBody>(_body);
+            if(mesh is null)
+            {
+                print("mesh isnt mesh!");
+                return;
+            }
+            for(int i = 0; i < mesh.tris.size(); i++)
+            {
+                mesh.tris[i].bod_id = i;
+            }
+        }
+
         velocity = Vec3f_ZERO;
     }
 
     void Physics()// only happens when dynamic
     {
         PhysicsEngine@ phys_engine = @entity.scene.physics;
-        SHBody@[] statics = phys_engine.getNearbyStatics(@this);
-        for(int i = 0; i < statics.size(); i++)
+        ComponentBodyPair@[]@ colliders = @phys_engine.getNearbyColliders(@this);
+        //if(colliders.size() == 0)
+            //entity.SetPosition(entity.transform.position + Vec3f(0,-0.02,0));
+        //print("colliders: "+colliders.size());
+        //for(int i = 0; i < colliders.size(); i++)
         {
-
+            
         }
     }
 
@@ -62,6 +82,8 @@ class PhysicsComponent : Component
 
 class PhysicsBody
 {
+    uint bod_id = 0;
+    
     BodyType type;
     AABB bounds;
 
@@ -158,17 +180,17 @@ class MeshBody : PhysicsBody
 
 // -----------------------------------------------------------------------------------------
 
-// statics space partitioning stuff --------------------------------------------------------
+// space partitioning stuff ----------------------------------------------------------------
 
-const float SH_GRID_SIZE = 4;
-
-class StaticSpatialHash
+class SpatialHash
 {
     dictionary hash_map;
 
-    StaticSpatialHash()
-    {
+    float GRID_SIZE = 4;
 
+    SpatialHash(float grid)
+    {
+        GRID_SIZE = grid;
     }
 
     void Add(PhysicsComponent@ comp)
@@ -179,21 +201,21 @@ class StaticSpatialHash
             MeshBody@ mesh = cast<MeshBody>(comp.body);
             if(mesh is null)
             {
-                print("hmm");
+                print("mesh isnt mesh!");
                 return;
             }
             TriangleBody[]@ tris = @mesh.tris;
             for(int i = 0; i < tris.size(); i++)
             {
-                AABB bounds = tris[i].bounds;
-                bounds *= comp.entity.transform.scale;
-                bounds += comp.entity.transform.position;
-                int x_start = bounds.min.x/SH_GRID_SIZE;
-                int y_start = bounds.min.y/SH_GRID_SIZE;
-                int z_start = bounds.min.z/SH_GRID_SIZE;
-                int x_end = bounds.max.x/SH_GRID_SIZE;
-                int y_end = bounds.max.y/SH_GRID_SIZE;
-                int z_end = bounds.max.z/SH_GRID_SIZE;
+                AABB bounds = tris[i].bounds * comp.entity.transform;
+                //bounds *= comp.entity.transform.scale;
+                //bounds += comp.entity.transform.position;
+                int x_start = Maths::Floor(bounds.min.x/GRID_SIZE);
+                int y_start = Maths::Floor(bounds.min.y/GRID_SIZE);
+                int z_start = Maths::Floor(bounds.min.z/GRID_SIZE);
+                int x_end = Maths::Ceil(bounds.max.x/GRID_SIZE);
+                int y_end = Maths::Ceil(bounds.max.y/GRID_SIZE);
+                int z_end = Maths::Ceil(bounds.max.z/GRID_SIZE);
 
                 for(int x = x_start; x < x_end; x++)
                     for(int y = y_start; y < y_end; y++)
@@ -202,15 +224,15 @@ class StaticSpatialHash
                             string hash = getHash(x, y, z);
                             if(hash_map.exists(hash))
                             {
-                                SHBody[]@ bucket;
+                                ComponentBodyPair@[]@ bucket;
                                 hash_map.get(hash, @bucket);
-                                bucket.push_back(SHBody(@comp, @tris[i]));
+                                bucket.push_back(@ComponentBodyPair(@comp, @tris[i]));
                                 hash_map.set(hash, @bucket);
                             }
                             else
                             {
-                                SHBody[] bucket;
-                                bucket.push_back(SHBody(@comp, @tris[i]));
+                                ComponentBodyPair@[] bucket;
+                                bucket.push_back(@ComponentBodyPair(@comp, @tris[i]));
                                 hash_map.set(hash, @bucket);
                             }
                         }
@@ -220,55 +242,91 @@ class StaticSpatialHash
         else
         {
             AABB bounds = comp.getBounds();
-            int x_start = bounds.min.x/SH_GRID_SIZE;
-            int y_start = bounds.min.y/SH_GRID_SIZE;
-            int z_start = bounds.min.z/SH_GRID_SIZE;
-            int x_end = bounds.max.x/SH_GRID_SIZE;
-            int y_end = bounds.max.y/SH_GRID_SIZE;
-            int z_end = bounds.max.z/SH_GRID_SIZE;
+            int x_start = Maths::Floor(bounds.min.x/GRID_SIZE);
+            int y_start = Maths::Floor(bounds.min.y/GRID_SIZE);
+            int z_start = Maths::Floor(bounds.min.z/GRID_SIZE);
+            int x_end = Maths::Ceil(bounds.max.x/GRID_SIZE);
+            int y_end = Maths::Ceil(bounds.max.y/GRID_SIZE);
+            int z_end = Maths::Ceil(bounds.max.z/GRID_SIZE);
 
             for(int x = x_start; x < x_end; x++)
+            {
                 for(int y = y_start; y < y_end; y++)
+                {
                     for(int z = z_start; z < z_end; z++)
                     {
                         string hash = getHash(x, y, z);
                         if(hash_map.exists(hash))
                         {
-                            SHBody[]@ bucket;
+                            ComponentBodyPair@[]@ bucket;
                             hash_map.get(hash, @bucket);
-                            bucket.push_back(SHBody(@comp, @comp.body));
+                            bucket.push_back(@ComponentBodyPair(@comp, @comp.body));
                             hash_map.set(hash, @bucket);
+
+                            if(comp.type == PhysicsComponentType::DYNAMIC)
+                            {
+                                comp.buckets_occupied.push_back(@bucket);
+                            }
                         }
                         else
                         {
-                            SHBody[] bucket;
-                            bucket.push_back(SHBody(@comp, @comp.body));
+                            ComponentBodyPair@[] bucket;
+                            bucket.push_back(@ComponentBodyPair(@comp, @comp.body));
                             hash_map.set(hash, @bucket);
+
+                            if(comp.type == PhysicsComponentType::DYNAMIC)
+                            {
+                                comp.buckets_occupied.push_back(@bucket);
+                            }
                         }
                     }
+                }
+            }
         }
     }
 
-    void getIn(AABB bounds, SHBody@[]@ colliders)
+    void getIn(AABB bounds, ComponentBodyPair@[]@ colliders)
     {
-        int x_start = bounds.min.x/SH_GRID_SIZE;
-        int y_start = bounds.min.y/SH_GRID_SIZE;
-        int z_start = bounds.min.z/SH_GRID_SIZE;
-        int x_end = bounds.max.x/SH_GRID_SIZE;
-        int y_end = bounds.max.y/SH_GRID_SIZE;
-        int z_end = bounds.max.z/SH_GRID_SIZE;
+        int x_start = Maths::Floor(bounds.min.x/GRID_SIZE);
+        int y_start = Maths::Floor(bounds.min.y/GRID_SIZE);
+        int z_start = Maths::Floor(bounds.min.z/GRID_SIZE);
+        int x_end = Maths::Ceil(bounds.max.x/GRID_SIZE);
+        int y_end = Maths::Ceil(bounds.max.y/GRID_SIZE);
+        int z_end = Maths::Ceil(bounds.max.z/GRID_SIZE);
 
+        dictionary copy_buffer;
         for(int x = x_start; x < x_end; x++)
+        {
             for(int y = y_start; y < y_end; y++)
+            {
                 for(int z = z_start; z < z_end; z++)
                 {
                     string hash = getHash(x, y, z);
-                    SHBody[]@ bucket;
-                    hash_map.get(hash, @bucket);
+                    if(hash_map.exists(hash))
+                    {
+                        ComponentBodyPair@[]@ bucket;
+                        hash_map.get(hash, @bucket);
+                        //print("bucket.size(): "+bucket.size());
 
-                    for(int i = 0; i < bucket.size(); i++)
-                        colliders.push_back(@bucket[i]);
+                        for(int j = 0; j < bucket.size(); j++)
+                        {
+                            ComponentBodyPair@ pair = @bucket[j];
+                            string hash = pair.comp.phy_id+"_"+pair.body.bod_id;
+                            if(!copy_buffer.exists(hash))
+                            {
+                                colliders.push_back(pair);
+                                copy_buffer.set(hash, true);
+                            }
+                        }
+                    }
                 }
+            }
+        }
+    }
+
+    void Clear()
+    {
+        hash_map.deleteAll();
     }
 
     string getHash(int x, int y, int z)
@@ -277,25 +335,11 @@ class StaticSpatialHash
     }
 }
 
-class SHBody
-{
-    PhysicsComponent@ comp;
-    PhysicsBody@ body;
-    AABB bounds;
-
-    SHBody(PhysicsComponent@ _comp, PhysicsBody@ _body)
-    {
-        @comp = @_comp;
-        @body = @_body;
-        bounds = comp.getBounds();
-    }
-}
-
 // -----------------------------------------------------------------------------------------
 
 // dynamics octree stuff -------------------------------------------------------------------
 
-const float MIN_OCTR_SIZE = 16; //64
+/*const float MIN_OCTR_SIZE = 16; //64
 
 class AABBOctree
 {
@@ -321,7 +365,7 @@ class AABBOctree
             PhysicsComponent@ comp = @objects[i];
             if(comp.type == PhysicsComponentType::DYNAMIC)
             {
-                comp.nodes_occupied.clear();
+                //comp.nodes_occupied.clear();
                 root_node.Add(@comp, comp.getBounds());
             }
         }
@@ -383,18 +427,34 @@ class AABBOctreeNode
             if(box.Intersects(bounds))
             {
                 dynamics.push_back(@comp);
-                comp.nodes_occupied.push_back(@this);
+                //comp.nodes_occupied.push_back(@this);
                 empty = false;
                 return true;
             }
         }
         for(int i = 0; i < 8; i++)
         {
-            if(children[i].Add(@comp, bounds))
-                empty = false;
+            children[i].Add(@comp, bounds);
+                //empty = false;
         }
         return false;
     }
-}
+}*/
 
 // -----------------------------------------------------------------------------------------
+
+// common 
+
+class ComponentBodyPair
+{
+    PhysicsComponent@ comp;
+    PhysicsBody@ body;
+    AABB bounds;
+
+    ComponentBodyPair(PhysicsComponent@ _comp, PhysicsBody@ _body)
+    {
+        @comp = @_comp;
+        @body = @_body;
+        bounds = _body.getBounds() * _comp.entity.transform;
+    }
+}

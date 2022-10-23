@@ -26,6 +26,8 @@ class Scene
 
 	void Tick()
 	{
+		physics.Physics();
+		
 		ent_manager.Tick();
 	}
 
