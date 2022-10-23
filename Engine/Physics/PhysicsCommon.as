@@ -60,15 +60,15 @@ class PhysicsComponent : Component
 
     void Physics()// only happens when dynamic
     {
-        PhysicsEngine@ phys_engine = @entity.scene.physics;
-        ComponentBodyPair@[]@ colliders = @phys_engine.getNearbyColliders(@this);
+        //PhysicsEngine@ phys_engine = @entity.scene.physics;
+        //ComponentBodyPair@[]@ colliders = @phys_engine.getNearbyColliders(@this);
         //if(colliders.size() == 0)
-            entity.SetPosition(entity.transform.position + Vec3f(0,-phy_id*0.01f,0));
+            //entity.SetPosition(entity.transform.position + Vec3f(0,-phy_id*0.01f,0));
         //print("colliders: "+colliders.size());
         //for(int i = 0; i < colliders.size(); i++)
-        {
+        //{
             
-        }
+        //}
     }
 
     AABB getBounds()
@@ -457,4 +457,166 @@ class ComponentBodyPair
         @body = @_body;
         bounds = _body.getBounds() * _comp.entity.transform;
     }
+}
+
+class CollisionData
+{
+	bool intersect;
+    bool inside;
+    Vec3f start_pos;
+    Vec3f vel;
+	Vec3f intersect_point;
+	Vec3f intersect_normal;
+    Vec3f push_out;
+	float t; // time of collision 
+	//int collision_type; // 0 = triangle, 1 = point, 2 = edge
+
+	CollisionData(Vec3f _start_pos = Vec3f(), Vec3f _velocity = Vec3f())
+	{
+		intersect = false;
+        inside = false;
+        start_pos = _start_pos;
+        vel = _velocity;
+		intersect_point = Vec3f();
+		intersect_normal = Vec3f();
+        push_out = Vec3f();
+		t = 1.0f;
+		//collision_type = -1;
+	}
+}
+
+void SphereTriangleCollision(CollisionData@ data, Vec3f triangle_v1, Vec3f triangle_v2, Vec3f triangle_v3)
+{
+    Vec3f pos = data.start_pos;// / sphere.radius;
+    Vec3f vel = data.vel;// / sphere.radius;
+    
+    Vec3f triangle_normal = (triangle_v2 - triangle_v1).Cross(triangle_v3 - triangle_v1).Normal();
+
+    float normal_dot_vel = triangle_normal.Dot(vel);
+
+    // check if moving at triangle's front face, exit if at back face
+	if (normal_dot_vel > 0.0f)
+    {
+        //print("moving in direction of triangle's normal");
+        return;
+    }
+
+    float t0 = 0.0f;
+    float t1 = 0.0f;
+    bool embedded_in_plane = false;
+
+    float signed_dist_to_plane = pos.Dot(triangle_normal) - triangle_normal.Dot(triangle_v1); // MIGHT BE + or - idk
+
+    //int collision_type = -1;
+    bool collides = false;
+    Vec3f intersect_point;
+    float t = 1.0f;
+
+    // we moving parallel to the plane
+    if(normal_dot_vel == 0.0f)
+    {
+        // and we are not touching triangle
+        if (Maths::Abs(signed_dist_to_plane) >= 1.0f)
+        {
+            // no collision possible 
+            //print("moving parallel to triangle's plane, not touching");
+            return;
+        }
+        else
+        {
+            //print("embedded_in_plane");
+            // sphere is in plane in whole range [0..1]
+            embedded_in_plane = true;
+            t0 = 0.0f;
+            t1 = 1.0f;
+        }
+    }
+    else
+    {
+        // N dot D is not 0, calc intersect interval
+        t0 = (-1.0f - signed_dist_to_plane) / normal_dot_vel;
+        t1 = ( 1.0f - signed_dist_to_plane) / normal_dot_vel;
+
+        // swap so t0 < t1
+        if (t0 > t1)
+        {
+            float temp = t1;
+            t1 = t0;
+            t0 = temp;
+        }
+
+        // check that at least one result is within range
+        if (t0 > 1.0f || t1 < 0.0f)
+        {
+            // both values outside range [0,1] so no collision
+            //print("no collision possible");
+            return;
+        }
+
+        // clamp to [0,1]
+        if (t0 < 0.0f) { t0 = 0.0f; }
+        if (t1 < 0.0f) { t1 = 0.0f; }
+        if (t0 > 1.0f) { t0 = 1.0f; }
+        if (t1 > 1.0f) { t1 = 1.0f; }
+    }
+
+    //print("t: "+t0+" "+t1);
+
+    if(!embedded_in_plane)
+    {
+        Vec3f plane_intersect_point = pos - triangle_normal;
+        Vec3f temp = vel * t0;
+        plane_intersect_point += temp;
+
+        //print("plane_intersect_point: "+plane_intersect_point.FloatString());
+        //print("triangle_v1: "+triangle_v1.FloatString());
+        //print("triangle_v2: "+triangle_v2.FloatString());
+        //print("triangle_v3: "+triangle_v3.FloatString());
+
+        if(PointInsideTriangle(plane_intersect_point, triangle_v1, triangle_v2, triangle_v3))
+        {
+            //print("inside triangle");
+            intersect_point = plane_intersect_point;
+            collides = true;
+            t = t0;
+            //collision_type = 0;
+        }
+    }
+
+    if(collides)
+    {
+        // if closer than previous intersection
+        if(t <= data.t || !data.intersect)
+        {
+            data.t = t;
+            data.intersect_point = intersect_point;// * sphere.radius;
+            data.intersect = true;
+            //data.collision_type = collision_type;
+            //print("collision");
+            return;
+        }
+        else
+        {
+            //print("too far?");
+        }
+    }
+}
+
+bool PointInsideTriangle(Vec3f point, Vec3f a, Vec3f b, Vec3f c)
+{
+    Vec3f v0 = c - a;
+		Vec3f v1 = b - a;
+		Vec3f v2 = point - a;
+
+		float dot00 = v0.Dot(v0);
+		float dot01 = v0.Dot(v1);
+		float dot02 = v0.Dot(v2);
+		float dot11 = v1.Dot(v1);
+		float dot12 = v1.Dot(v2);
+
+		float invDenom = 1.0f / (dot00 * dot11 - dot01 * dot01);
+		float u = (dot11 * dot02 - dot01 * dot12) * invDenom;
+		float v = (dot00 * dot12 - dot01 * dot02) * invDenom;
+
+		return ((u >= 0.0f) && (v >= 0.0f) && (u + v < 1.0f));
 }

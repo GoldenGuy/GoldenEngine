@@ -1,29 +1,28 @@
 
-class DynamicBodyComponent : Physical
+class DynamicBodyComponent : PhysicsComponent
 {
-    string getName() const {return "dynamic_body";}
-	
-	Vec3f velocity;
+    //Vec3f velocity;
 	float friction;
 	float bounce;
     bool sleeping;
 	bool grounded;
-	Physical@ floor;
+	//Physical@ floor;
 
-    DynamicBodyComponent(PhysicsScene@ _physics_scene, ColliderBody@ _body, float _friction = 0.7f, float _bounce = 0.5f)
+    DynamicBodyComponent(PhysicsBody@ _body, float _friction = 0.7f, float _bounce = 0.5f)
 	{
-		super(_physics_scene, _body);
+		super(PhysicsComponentType::DYNAMIC, _body);
+		name = "DynamicBodyComponent";
+
 		friction = _friction;
 		bounce = _bounce;
 		velocity = Vec3f(0,0,0);
 		sleeping = false;
 		grounded = false;
-		body_type = BodyType::DYNAMIC;
 	}
 
-	ResolutionResult Physics(Physical@[] colliders)
+	void Physics()
 	{
-		ResolutionResult result = ResolutionResult();
+		//ResolutionResult result = ResolutionResult();
 
 		bool do_push = false;
 		Vec3f push_amount = Vec3f();
@@ -41,25 +40,31 @@ class DynamicBodyComponent : Physical
 		bool done = false;
 		int stop = 0;
 
+		ComponentBodyPair@[]@ colliders = @entity.scene.physics.getNearbyColliders(@this);
+
 		while(!done)
 		{
 			stop++;
-			if(stop > DYNAMIC_ITERATIONS)
+			if(stop > 3)
 			{
 				done = true;
 				break;
 			}
-			
 
 			// also keep track of what Physical we hit, if its trigger we remove it from colliders aray for next check and do -1 to stop counter
 			CollisionData data = CollisionData(pos, vel);
+			AABB bounds = body.getBounds();
+			bounds += pos;
 			for(int i = 0; i < colliders.size(); i++)
 			{
-				Physical@ other = colliders[i];
+				//Physical@ other = colliders[i];
+				PhysicsComponent@ other = @colliders[i].comp;
+				//if(!bounds.Intersects(colliders[i].bounds))
+				//	continue;
 				CollisionData _data = data;
 				_data.start_pos -= other.entity.transform.position;
 				
-				body.Collide(@other.body, @_data);
+				entity.scene.physics.Collide(@body, @colliders[i].body, @_data);
 
 				if(_data.t < data.t)
 				{
@@ -162,13 +167,15 @@ class DynamicBodyComponent : Physical
 		//new_vel += push_amount.Normal()*0.01f;
 
 		if(!grounded)
-			new_vel += physics_scene.gravity_force;
+			new_vel += gravity_force;
 
-		result.needed = true;
-		result.id = physics_id;
-		result.new_position = dest;
-		result.new_velocity = new_vel;
+		//result.needed = true;
+		//result.id = physics_id;
+		//result.new_position = dest;
+		//result.new_velocity = new_vel;
 
-		return result;
+		//return result;
+		entity.SetPosition(dest);
+		velocity = new_vel;
 	}
 }
