@@ -63,7 +63,7 @@ class PhysicsComponent : Component
         PhysicsEngine@ phys_engine = @entity.scene.physics;
         ComponentBodyPair@[]@ colliders = @phys_engine.getNearbyColliders(@this);
         //if(colliders.size() == 0)
-            //entity.SetPosition(entity.transform.position + Vec3f(0,-0.02,0));
+            entity.SetPosition(entity.transform.position + Vec3f(0,-phy_id*0.01f,0));
         //print("colliders: "+colliders.size());
         //for(int i = 0; i < colliders.size(); i++)
         {
@@ -138,7 +138,7 @@ class TriangleBody : PhysicsBody
         float y_max = Maths::Max(Maths::Max(a.y, b.y), c.y);
         float z_max = Maths::Max(Maths::Max(a.z, b.z), c.z);
 
-        bounds = AABB(Vec3f(x_min, y_min, z_min), Vec3f(x_max, y_max, z_max));
+        bounds = AABB(Vec3f(x_min, y_min, z_min)-Vec3f(0.1f), Vec3f(x_max, y_max, z_max)+Vec3f(0.1f));
     }
 }
 
