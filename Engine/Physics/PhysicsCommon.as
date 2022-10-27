@@ -1,187 +1,17 @@
 
-// component stuff ------------------------------------------------------------------------
-
-enum BodyType
-{
-    NONE,
-    POINT,
-    PLANE,
-    TRIANGLE,
-    MESH, // should never be dynamic, sorry
-    POLYGON,
-    SPHERE,
-    ELLIPSOID,
-    AABB,
-    OBB
-}
-
-enum PhysicsComponentType
-{
-    STATIC,
-    DYNAMIC
-}
-
-class PhysicsComponent : Component
-{
-    uint phy_id;
-    
-    ComponentBodyPair@[]@[] buckets_occupied; // for dynamics only
-    
-    PhysicsComponentType type;
-    PhysicsBody@ body;
-
-    Vec3f velocity;
-
-    PhysicsComponent(PhysicsComponentType _type, PhysicsBody@ _body)
-    {
-        hooks = CompHooks::PHYSICS;
-        name = "PhysicsComponent";
-        
-        type = _type;
-        @body = @_body;
-
-        if(body.type == BodyType::MESH)
-        {
-            MeshBody@ mesh = cast<MeshBody>(_body);
-            if(mesh is null)
-            {
-                print("mesh isnt mesh!");
-                return;
-            }
-            for(int i = 0; i < mesh.tris.size(); i++)
-            {
-                mesh.tris[i].bod_id = i;
-            }
-        }
-
-        velocity = Vec3f_ZERO;
-    }
-
-    void Physics(ResponseResult@ result) // only happens when dynamic
-    {
-        
-    }
-
-    AABB getBounds()
-    {
-        AABB aabb = body.getBounds();
-        aabb *= entity.transform.scale;
-        aabb += entity.transform.position;
-        return aabb;
-    }
-}
-
-class PhysicsBody
-{
-    uint bod_id = 0;
-    
-    BodyType type;
-    AABB bounds;
-
-    AABB getBounds()
-    {
-        return bounds;
-    }
-}
-
-class SphereBody : PhysicsBody
-{
-    float radius;
-
-    SphereBody(float _radius)
-    {
-        radius = _radius;
-        type = BodyType::SPHERE;
-        bounds = AABB(Vec3f(-radius), Vec3f(radius));
-    }
-}
-
-class EllipsoidBody : PhysicsBody
-{
-    Vec3f radius;
-
-    EllipsoidBody(Vec3f _radius)
-    {
-        radius = _radius;
-        type = BodyType::ELLIPSOID;
-        bounds = AABB(-radius, radius);
-    }
-}
-
-class TriangleBody : PhysicsBody
-{
-    Vec3f a;
-    Vec3f b;
-    Vec3f c;
-
-    TriangleBody(Vec3f _a, Vec3f _b, Vec3f _c)
-    {
-        a = _a;
-        b = _b;
-        c = _c;
-        type = BodyType::TRIANGLE;
-
-        float x_min = Maths::Min(Maths::Min(a.x, b.x), c.x);
-        float y_min = Maths::Min(Maths::Min(a.y, b.y), c.y);
-        float z_min = Maths::Min(Maths::Min(a.z, b.z), c.z);
-
-        float x_max = Maths::Max(Maths::Max(a.x, b.x), c.x);
-        float y_max = Maths::Max(Maths::Max(a.y, b.y), c.y);
-        float z_max = Maths::Max(Maths::Max(a.z, b.z), c.z);
-
-        bounds = AABB(Vec3f(x_min, y_min, z_min)-Vec3f(0.1f), Vec3f(x_max, y_max, z_max)+Vec3f(0.1f));
-    }
-}
-
-class MeshBody : PhysicsBody
-{
-    TriangleBody[] tris;
-
-    MeshBody(Vertex[] _tris)
-    {
-        type = BodyType::MESH;
-        int size = _tris.size();
-
-        float x_min = 0;
-        float y_min = 0;
-        float z_min = 0;
-
-        float x_max = 0;
-        float y_max = 0;
-        float z_max = 0;
-
-        for(int i = 0; i < size; i += 3)
-        {
-            Vertex vert_a = _tris[i];
-            Vertex vert_b = _tris[i+1];
-            Vertex vert_c = _tris[i+2];
-            tris.push_back(TriangleBody(Vec3f(vert_a.x, vert_a.y, vert_a.z), Vec3f(vert_b.x, vert_b.y, vert_b.z), Vec3f(vert_c.x, vert_c.y, vert_c.z)));
-
-            x_min = Maths::Min(Maths::Min(Maths::Min(vert_a.x, vert_b.x), vert_c.x), x_min);
-            y_min = Maths::Min(Maths::Min(Maths::Min(vert_a.y, vert_b.y), vert_c.y), y_min);
-            z_min = Maths::Min(Maths::Min(Maths::Min(vert_a.z, vert_b.z), vert_c.z), z_min);
-            x_max = Maths::Max(Maths::Max(Maths::Max(vert_a.x, vert_b.x), vert_c.x), x_max);
-            y_max = Maths::Max(Maths::Max(Maths::Max(vert_a.y, vert_b.y), vert_c.y), y_max);
-            z_max = Maths::Max(Maths::Max(Maths::Max(vert_a.z, vert_b.z), vert_c.z), z_max);
-        }
-
-        bounds = AABB(Vec3f(x_min, y_min, z_min), Vec3f(x_max, y_max, z_max));
-    }
-}
-
-// -----------------------------------------------------------------------------------------
-
-// space partitioning stuff ----------------------------------------------------------------
+#include "PhysicsBodies.as"
+#include "PhysicsComponent.as"
 
 class SpatialHash
 {
-    dictionary hash_map;
+    Dictionary hash_map;
 
-    float GRID_SIZE = 4;
+    float GRID_SIZE;
 
     SpatialHash(float grid)
     {
         GRID_SIZE = grid;
+        hash_map = Dictionary();
     }
 
     void Add(PhysicsComponent@ comp)
@@ -199,8 +29,6 @@ class SpatialHash
             for(int i = 0; i < tris.size(); i++)
             {
                 AABB bounds = tris[i].bounds * comp.entity.transform;
-                //bounds *= comp.entity.transform.scale;
-                //bounds += comp.entity.transform.position;
                 int x_start = Maths::Floor(bounds.min.x/GRID_SIZE);
                 int y_start = Maths::Floor(bounds.min.y/GRID_SIZE);
                 int z_start = Maths::Floor(bounds.min.z/GRID_SIZE);
@@ -209,24 +37,28 @@ class SpatialHash
                 int z_end = Maths::Ceil(bounds.max.z/GRID_SIZE);
 
                 for(int x = x_start; x < x_end; x++)
+                {
                     for(int y = y_start; y < y_end; y++)
+                    {
                         for(int z = z_start; z < z_end; z++)
                         {
                             string hash = getHash(x, y, z);
                             if(hash_map.exists(hash))
                             {
-                                ComponentBodyPair@[]@ bucket;
-                                hash_map.get(hash, @bucket);
+                                ComponentBodyPair@[] bucket;
+                                hash_map.get(hash, bucket);
                                 bucket.push_back(@ComponentBodyPair(@comp, @tris[i]));
-                                hash_map.set(hash, @bucket);
+                                hash_map.set(hash, bucket);
                             }
                             else
                             {
                                 ComponentBodyPair@[] bucket;
                                 bucket.push_back(@ComponentBodyPair(@comp, @tris[i]));
-                                hash_map.set(hash, @bucket);
+                                hash_map.set(hash, bucket);
                             }
                         }
+                    }
+                }
             }
         }
         // for all the singular bodies
@@ -249,26 +81,26 @@ class SpatialHash
                         string hash = getHash(x, y, z);
                         if(hash_map.exists(hash))
                         {
-                            ComponentBodyPair@[]@ bucket;
-                            hash_map.get(hash, @bucket);
+                            ComponentBodyPair@[] bucket;
+                            hash_map.get(hash, bucket);
                             bucket.push_back(@ComponentBodyPair(@comp, @comp.body));
-                            hash_map.set(hash, @bucket);
+                            hash_map.set(hash, bucket);
 
-                            if(comp.type == PhysicsComponentType::DYNAMIC)
+                            /*if(comp.type == PhysicsComponentType::DYNAMIC)
                             {
                                 comp.buckets_occupied.push_back(@bucket);
-                            }
+                            }*/
                         }
                         else
                         {
                             ComponentBodyPair@[] bucket;
                             bucket.push_back(@ComponentBodyPair(@comp, @comp.body));
-                            hash_map.set(hash, @bucket);
+                            hash_map.set(hash, bucket);
 
-                            if(comp.type == PhysicsComponentType::DYNAMIC)
+                            /*if(comp.type == PhysicsComponentType::DYNAMIC)
                             {
                                 comp.buckets_occupied.push_back(@bucket);
-                            }
+                            }*/
                         }
                     }
                 }
@@ -276,7 +108,7 @@ class SpatialHash
         }
     }
 
-    void getIn(AABB bounds, ComponentBodyPair@[]@ colliders)
+    void getIn(AABB&in bounds, ComponentBodyPair@[]& colliders)
     {
         int x_start = Maths::Floor(bounds.min.x/GRID_SIZE);
         int y_start = Maths::Floor(bounds.min.y/GRID_SIZE);
@@ -295,9 +127,8 @@ class SpatialHash
                     string hash = getHash(x, y, z);
                     if(hash_map.exists(hash))
                     {
-                        ComponentBodyPair@[]@ bucket;
-                        hash_map.get(hash, @bucket);
-                        //print("bucket.size(): "+bucket.size());
+                        ComponentBodyPair@[] bucket;
+                        hash_map.get(hash, bucket);
 
                         for(int j = 0; j < bucket.size(); j++)
                         {
@@ -318,6 +149,8 @@ class SpatialHash
     void Clear()
     {
         hash_map.deleteAll();
+        //dictionary _new;
+        //hash_map = _new;
     }
 
     string getHash(int x, int y, int z)
@@ -350,7 +183,7 @@ class CollisionData
     bool inside;
     Vec3f start_pos;
     Vec3f vel;
-    Vec3f other_vel;
+    //Vec3f other_vel;
 	Vec3f intersect_point;
 	Vec3f intersect_normal;
     Vec3f push_out;
@@ -363,13 +196,24 @@ class CollisionData
         inside = false;
         start_pos = _start_pos;
         vel = _velocity;
-        other_vel = Vec3f_ZERO;
+        //other_vel = Vec3f_ZERO;
 		intersect_point = Vec3f();
 		intersect_normal = Vec3f();
         push_out = Vec3f();
 		t = 1.0f;
 		//collision_type = -1;
 	}
+
+    //Therefore, we can simply
+    //use the unmodified intersection point and the vector pointing
+    //from the unmodified intersection point to the touch point to
+    //find the sliding plane...
+    Plane slidingPlane()
+    {
+        Vec3f touch_point = start_pos + (vel * t);
+        Vec3f normal = (touch_point - intersect_point).Normal();
+        return Plane(intersect_point, normal);
+    }
 }
 
 class ResponseResult
@@ -385,6 +229,276 @@ class ResponseResult
     }
 }
 
+// maths
+
+void SphereTriangleCollision(CollisionData@ colPackage, Vec3f p1, Vec3f p2, Vec3f p3)
+{
+	// Make the Plane containing this triangle.
+	Plane trianglePlane(p1, p2, p3);
+	// Is triangle front-facing to the velocity vector?
+	// We only check front-facing triangles
+	// (your choice of course)
+	if (trianglePlane.isFrontFacingTo(colPackage.vel.Normal())) // should i normalize?
+    {
+		// Get interval of Plane intersection:
+		float t0, t1;
+		bool embeddedInPlane = false;
+
+		// Calculate the signed distance from sphere
+		// position to triangle Plane
+		float signedDistToTrianglePlane = trianglePlane.signedDistanceTo(colPackage.start_pos);
+
+		// cache this as we’re going to use it a few times below:
+		float normalDotVelocity = trianglePlane.normal.Dot(colPackage.vel);
+		// if sphere is travelling parrallel to the Plane:
+		if (normalDotVelocity == 0.0f)
+        {
+			if (Maths::Abs(signedDistToTrianglePlane) >= 1.0f)
+            {
+				// Sphere is not embedded in Plane.
+				// No collision possible:
+				return;
+			}
+			else
+            {
+				// sphere is embedded in Plane.
+				// It intersects in the whole range [0..1]
+				embeddedInPlane = true;
+				t0 = 0.0f;
+				t1 = 1.0f;
+			}
+		}
+		else
+        {
+			// N dot D is not 0. Calculate intersection interval:
+			t0 = (-1.0f - signedDistToTrianglePlane) / normalDotVelocity;
+			t1 = ( 1.0f - signedDistToTrianglePlane) / normalDotVelocity;
+
+			// Swap so t0 < t1
+			if (t0 > t1)
+            {
+				float temp = t1;
+				t1 = t0;
+				t0 = temp;
+			}
+
+			// Check that at least one result is within range:
+			if (t0 > 1.0f || t1 < 0.0f)
+            {
+				// Both t values are outside values [0,1]
+				// No collision possible:
+				return;
+			}
+			// Clamp to [0,1]
+			if (t0 < 0.0f) t0 = 0.0f;
+			if (t1 < 0.0f) t1 = 0.0f;
+			if (t0 > 1.0f) t0 = 1.0f;
+			if (t1 > 1.0f) t1 = 1.0f;
+		}
+
+		// OK, at this point we have two time values t0 and t1
+		// between which the swept sphere intersects with the
+		// triangle Plane. If any collision is to occur it must
+		// happen within this interval.
+		Vec3f collisionPoint;
+		bool foundCollison = false;
+		float t = 1.0f;
+
+		// First we check for the easy case - collision inside
+		// the triangle. If this happens it must be at time t0
+		// as this is when the sphere rests on the front side
+		// of the triangle Plane. Note, this can only happen if
+		// the sphere is not embedded in the triangle Plane.
+		if (!embeddedInPlane)
+        {
+			Vec3f PlaneIntersectionPoint = (colPackage.start_pos - trianglePlane.normal) + colPackage.vel * t0;
+
+			if (checkPointInTriangle(PlaneIntersectionPoint, p1, p2, p3))
+			{
+				foundCollison = true;
+				t = t0;
+				collisionPoint = PlaneIntersectionPoint;
+			}
+		}
+		// if we haven’t found a collision already we’ll have to
+		// sweep sphere against points and edges of the triangle.
+		// Note: A collision inside the triangle (the check above)
+		// will always happen before a vertex or edge collision!
+		// This is why we can skip the swept test if the above
+		// gives a collision!
+
+		if (!foundCollison)
+        {
+			// some commonly used terms:
+			Vec3f velocity = colPackage.vel;
+			Vec3f base = colPackage.start_pos;
+			float velocitySquaredLength = velocity.SquaredLength();
+			float a, b, c; // Params for equation
+			float newT;
+
+			// For each vertex or edge a quadratic equation have to
+			// be solved. We parameterize this equation as
+			// a*t^2 + b*t + c = 0 and below we calculate the
+			// parameters a,b and c for each test.
+
+			// Check against points:
+			a = velocitySquaredLength;
+
+			// P1
+			b = 2.0f * (velocity.Dot(base - p1));
+			c = (p1 - base).Dot(p1 - base) - 1.0f;
+			if (getLowestRoot(a, b , c, t, newT))
+            {
+				t = newT;
+				foundCollison = true;
+				collisionPoint = p1;
+			}
+
+			// P2
+			b = 2.0f * (velocity.Dot(base - p2));
+			c = (p2 - base).Dot(p2 - base) - 1.0f;
+			if (getLowestRoot(a, b, c, t, newT))
+            {
+				t = newT;
+				foundCollison = true;
+				collisionPoint = p2;
+			}
+
+			// P3
+			b = 2.0f * (velocity.Dot(base - p3));
+			c = (p3 - base).Dot(p3 - base) - 1.0f;
+			if (getLowestRoot(a, b, c, t, newT))
+            {
+				t = newT;
+				foundCollison = true;
+				collisionPoint = p3;
+			}
+
+			// Check agains edges:
+
+			// p1 . p2:
+			Vec3f edge = p2-p1;
+			Vec3f baseToVertex = p1 - base;
+			float edgeSquaredLength = edge.Dot(edge);
+			float edgeDotVelocity = edge.Dot(velocity);
+			float edgeDotBaseToVertex = edge.Dot(baseToVertex);
+
+			// Calculate parameters for equation
+			a = edgeSquaredLength * (-velocitySquaredLength) + edgeDotVelocity * edgeDotVelocity;
+			b = edgeSquaredLength * (2.0f * velocity.Dot(baseToVertex)) - 2.0f * edgeDotVelocity * edgeDotBaseToVertex;
+			c = edgeSquaredLength * (1.0f - baseToVertex.Dot(baseToVertex)) + edgeDotBaseToVertex * edgeDotBaseToVertex;
+
+			// Does the swept sphere collide against infinite edge?
+			if (getLowestRoot(a,b,c, t, newT))
+            {
+				// Check if intersection is within line segment:
+				float f = (edgeDotVelocity * newT - edgeDotBaseToVertex) / edgeSquaredLength;
+				if (f >= 0.0 && f <= 1.0)
+                {
+					// intersection took place within segment.
+					t = newT;
+					foundCollison = true;
+					collisionPoint = p1 + edge * f;
+				}
+			}
+
+			// p2 . p3:
+			edge = p3 - p2;
+			baseToVertex = p2 - base;
+			edgeSquaredLength = edge.Dot(edge);
+			edgeDotVelocity = edge.Dot(velocity);
+			edgeDotBaseToVertex = edge.Dot(baseToVertex);
+
+			a = edgeSquaredLength * (-velocitySquaredLength) + edgeDotVelocity * edgeDotVelocity;
+			b = edgeSquaredLength * (2.0f * velocity.Dot(baseToVertex)) - 2.0f * edgeDotVelocity * edgeDotBaseToVertex;
+			c = edgeSquaredLength * (1.0f - baseToVertex.Dot(baseToVertex)) + edgeDotBaseToVertex * edgeDotBaseToVertex;
+
+			if (getLowestRoot(a, b, c, t, newT))
+            {
+				float f = (edgeDotVelocity * newT - edgeDotBaseToVertex) / edgeSquaredLength;
+				if (f >= 0.0f && f <= 1.0f)
+                {
+					t = newT;
+					foundCollison = true;
+					collisionPoint = p2 + edge * f;
+				}
+			}
+
+			// p3 . p1:
+			edge = p1 - p3;
+			baseToVertex = p3 - base;
+			edgeSquaredLength = edge.Dot(edge);
+			edgeDotVelocity = edge.Dot(velocity);
+
+			edgeDotBaseToVertex = edge.Dot(baseToVertex);
+
+			a = edgeSquaredLength * (-velocitySquaredLength) + edgeDotVelocity * edgeDotVelocity;
+			b = edgeSquaredLength * (2.0f * velocity.Dot(baseToVertex)) - 2.0f * edgeDotVelocity * edgeDotBaseToVertex;
+			c = edgeSquaredLength * (1.0f - baseToVertex.Dot(baseToVertex)) + edgeDotBaseToVertex * edgeDotBaseToVertex;
+
+			if (getLowestRoot(a, b, c, t, newT))
+            {
+				float f = (edgeDotVelocity * newT - edgeDotBaseToVertex) / edgeSquaredLength;
+				if (f >= 0.0f && f <= 1.0f)
+                {
+					t = newT;
+					foundCollison = true;
+					collisionPoint = p3 + edge * f;
+				}
+			}
+		}
+		// Set result:
+		if (foundCollison)
+        {
+			// distance to collision: ’t’ is time of collision
+			// float distToCollision = t*colPackage.vel.Length();
+			// Does this triangle qualify for the closest hit?
+			// it does if it’s the first hit or the closest
+			if (!colPackage.intersect || t < colPackage.t)//distToCollision < colPackage.nearestDistance)
+            {
+				// Collision information nessesary for sliding
+				//colPackage.nearestDistance = distToCollision;
+                colPackage.t = t;
+				colPackage.intersect_point = collisionPoint;
+				colPackage.intersect = true;
+			}
+		}
+	} // if not backface
+}
+
+void sphIntersect(CollisionData@ colPackage, float ra )
+{
+    Vec3f oc = colPackage.start_pos;
+    Vec3f move_dir = colPackage.vel.Normal();
+    float b = oc.Dot(move_dir);
+    float c = oc.Dot(oc) - ra*ra;
+    float h = b*b - c;
+    if( h < 0.0 )  // no intersection
+    {
+        return;
+    }
+    h = Maths::Sqrt( h );
+    float vel_len = colPackage.vel.Length();
+    if( -b-h > vel_len || -b-h < 0 ) // too far or negative
+    {
+        return;
+    }
+
+    float t = (-b-h) / vel_len;
+
+    if( t < 0 ) return;
+
+    if (!colPackage.intersect || t < colPackage.t)
+    {
+        colPackage.intersect_point = oc + (move_dir * (-b-h));
+        colPackage.t = t;
+        //print("t: "+t);
+        colPackage.intersect = true;
+    }
+    //return vec2( -b-h, -b+h );
+}
+
+/*
 void SphereTriangleCollision(CollisionData@ data, Vec3f triangle_v1, Vec3f triangle_v2, Vec3f triangle_v3)
 {
     Vec3f pos = data.start_pos;// / sphere.radius;
@@ -553,4 +667,4 @@ void RaySphereCollision(CollisionData@ data, float sphere_radius)
         data.intersect_point = Vec3f();
         data.intersect = true;
     }
-}
+}*/

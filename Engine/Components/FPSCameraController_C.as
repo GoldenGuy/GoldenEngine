@@ -14,9 +14,10 @@ class FPSCameraController : Component
     void Init()
     {
         angle = entity.scene.camera.angle;
-        Vec3f euler = angle.ToEuler();
-        pitch = old_pitch = rtd(euler.x);
-        yaw = old_yaw = rtd(euler.y);
+        pitch = old_pitch = yaw = old_yaw = 0;
+        //Vec3f euler = angle.ToEuler();
+        //pitch = old_pitch = rtd(euler.x);
+        //yaw = old_yaw = rtd(euler.y);
         getControls().setMousePosition(Vec2f(getScreenWidth(), getScreenHeight())/2.0f);
     }
 

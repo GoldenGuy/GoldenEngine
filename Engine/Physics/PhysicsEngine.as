@@ -12,28 +12,21 @@ class PhysicsEngine
     PhysicsComponent@[] physics_components;
     SpatialHash statics_spatial_hash;
     SpatialHash dynamics_spatial_hash;
-    ResponseResult@[] results;
+    ResponseResult[] results;
 
     PhysicsEngine(Scene@ _s)
     {
         @scene = @_s;
         statics_spatial_hash = SpatialHash(2);
-        dynamics_spatial_hash = SpatialHash(2);
+        //dynamics_spatial_hash = SpatialHash(4);
     }
 
     void Physics()
     {
-        dynamics_spatial_hash.Clear();
-        results.clear();
-        for(int i = 0; i < physics_components.size(); i++)
-        {
-            PhysicsComponent@ comp = @physics_components[i];
-            if(comp.type == PhysicsComponentType::DYNAMIC)
-            {
-                comp.buckets_occupied.clear();
-                dynamics_spatial_hash.Add(@comp);
-            }
-        }
+        //dynamics_spatial_hash.Clear();
+        dynamics_spatial_hash = SpatialHash(4);
+
+        uint[] dynamics;
 
         for(uint i = 0; i < physics_components.size(); i++)
 		{
@@ -45,36 +38,43 @@ class PhysicsEngine
             
             else if (physics_components[i].type == PhysicsComponentType::DYNAMIC)
             {
-                ResponseResult result;
-                result.id = i;
-                physics_components[i].Physics(@result);
-                if(result.needed)
-                {
-                    results.push_back(@result);
-                }
+                dynamics_spatial_hash.Add(@physics_components[i]);
+                dynamics.push_back(i);
             }
 		}
 
+        for(int i = 0; i < dynamics.size(); i++)
+        {
+            ResponseResult result;
+            result.id = dynamics[i];
+            physics_components[dynamics[i]].Physics(@result);
+            if(result.needed)
+            {
+                results.push_back(result);
+            }
+        }
+
         for(int i = 0; i < results.size(); i++)
         {
-            ResponseResult@ result = @results[i];
-            physics_components[result.id].entity.SetPosition(result.new_position);
-            physics_components[result.id].velocity = result.new_velocity;
+            physics_components[results[i].id].entity.SetPosition(results[i].new_position);
+            physics_components[results[i].id].velocity = results[i].new_velocity;
         }
+        results.clear();
     }
 
     ComponentBodyPair@[]@ getNearbyColliders(PhysicsComponent@ comp) // only for dynamics!
     {
-        dictionary copy_buffer;
+        //dictionary copy_buffer;
         ComponentBodyPair@[] output;
         AABB bounds = comp.getBounds();
         bounds = bounds + (bounds + comp.velocity); // account for movement
 
         // get the statics
-        statics_spatial_hash.getIn(bounds, @output);
+        statics_spatial_hash.getIn(bounds, output);
 
         // now get the dynamics
-        for(int i = 0; i < comp.buckets_occupied.size(); i++)
+        dynamics_spatial_hash.getIn(bounds, output);
+        /*for(int i = 0; i < comp.buckets_occupied.size(); i++)
         {
             ComponentBodyPair@[]@ pair_array = @comp.buckets_occupied[i];
             if(pair_array.size() > 0)
@@ -91,13 +91,59 @@ class PhysicsEngine
                     }
                 }
             }
-        }
+        }*/
         return @output;
     }
 
-    void Collide(PhysicsBody@ first, PhysicsBody@ second, CollisionData@ data)
+    bool Collide(PhysicsBody@ first, PhysicsBody@ second, CollisionData@ data) // always considers first body to be dynamic (obvious duuh), returns true if collides
     {
-        if(first.type == BodyType::SPHERE && second.type == BodyType::TRIANGLE)
+        switch(first.type)
+        {
+            case BodyType::SPHERE:
+            {
+                SphereBody@ sphere = cast<SphereBody>(first);
+                //Vec3f orig_pos = data.start_pos;
+                //Vec3f orig_vel = data.vel;
+
+                data.start_pos /= sphere.radius;
+                data.vel /= sphere.radius;
+                
+                switch(second.type)
+                {
+                    case BodyType::TRIANGLE:
+                    {
+                        TriangleBody@ triangle = cast<TriangleBody>(second);
+                        Vec3f a = triangle.a / sphere.radius;
+                        Vec3f b = triangle.b / sphere.radius;
+                        Vec3f c = triangle.c / sphere.radius;
+
+                        SphereTriangleCollision(@data, a, b, c);
+                        if(data.intersect)
+                        {
+                            data.intersect_point *= sphere.radius;
+                        }
+                    }
+                    break;
+
+                    case BodyType::SPHERE:
+                    {
+                        SphereBody@ other_sphere = cast<SphereBody>(second);
+
+                        sphIntersect(@data, other_sphere.radius + sphere.radius);
+                        if(data.intersect)
+                        {
+                            data.intersect_point *= sphere.radius;
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+
+        return data.intersect;
+    }
+        
+        /*if(first.type == BodyType::SPHERE && second.type == BodyType::TRIANGLE)
         {
             SphereBody@ sphere = cast<SphereBody>(first);
             data.start_pos /= sphere.radius;
@@ -111,7 +157,8 @@ class PhysicsEngine
             }
             data.start_pos *= sphere.radius;
             data.vel *= sphere.radius;
-        }
+        }*/
+
         /*else if (first.type == BodyType::SPHERE && second.type == BodyType::SPHERE)
         {
             SphereBody@ sphere = cast<SphereBody>(first);
@@ -216,8 +263,8 @@ class PhysicsEngine
                 //error("SphereBody::Collide - Unsupported body shape");
                 //printTrace();
             }
-        }*/
-    }
+        }
+    }*/
 
     void AddComponent(Component@ component)
 	{

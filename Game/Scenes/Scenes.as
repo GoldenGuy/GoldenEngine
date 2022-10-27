@@ -10,18 +10,20 @@ void CreateTestLevel(Scene@ scene)
         ent.AddComponent(PhysicsComponent(PhysicsComponentType::STATIC, MeshBody(leveltest)));
     }
 
-    for(int i = 0; i < 20; i++)
+    /*for(int i = 0; i < 25; i++)
     {
-        Entity@ ent = scene.CreateEntity("fymo");
+        Entity@ ent = scene.CreateEntity("ball");
         //ent.AddComponent(ObjRendererComponent("improved_fumo.obj"));
         ent.AddComponent(MeshRendererComponent(RenderPrimitives::sphere));
         ent.AddComponent(DynamicBodyComponent(SphereBody(1)));
-        ent.SetPositionImmediate(Vec3f(i%5-3,10+(i/10)*2,(i-5)%10));
-    }
+        float x = (float(i % 5) - 2.5f) * 2.5f;
+        float z = (float(int(i / 5)) - 2.5f) * 2.5f;
+        ent.SetPositionImmediate(Vec3f(x, 10, z));
+    }*/
 
     {
         Entity@ ent = scene.CreateEntity("player camera");
-        ent.AddComponent(FPSCameraController());
+        //ent.AddComponent(FPSCameraController());
         ent.AddComponent(FreeFlyMovement());
         ent.SetPositionImmediate(Vec3f(14, 12, 0));
     }

@@ -43,9 +43,10 @@ namespace GoldEngine
 		}
 		else
 		{
+			game.Render();
+
 			if(Menu::getMainMenu() is null)
             	render_delta += getRenderApproximateCorrectionFactor();
-			game.Render();
 		}
 	}
 

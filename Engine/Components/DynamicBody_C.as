@@ -1,45 +1,122 @@
 
+const float very_close_dist = 0.005f;
+
 class DynamicBodyComponent : PhysicsComponent
 {
-    float friction;
-	float bounce;
-    bool sleeping;
-	bool grounded;
+    //float friction;
+	//float bounce;
+    //bool sleeping;
+	//bool grounded;
 	//Physical@ floor;
+	PhysicsEngine@ physics;
 
     DynamicBodyComponent(PhysicsBody@ _body, float _friction = 0.7f, float _bounce = 0.5f)
 	{
 		super(PhysicsComponentType::DYNAMIC, _body);
 		name = "DynamicBodyComponent";
 
-		friction = _friction;
-		bounce = _bounce;
-		velocity = Vec3f(0,0,0);
-		sleeping = false;
-		grounded = false;
+		//friction = _friction;
+		//bounce = _bounce;
+		//velocity = Vec3f(0,0,0);
+		//sleeping = false;
+		//grounded = false;
+	}
+
+	void Init()
+	{
+		@physics = @entity.scene.physics;
 	}
 
 	void Physics(ResponseResult@ result)
 	{
-		bool do_push = false;
-		Vec3f push_amount = Vec3f();
+		//bool do_push = false;
+		//Vec3f push_amount = Vec3f();
 
-		grounded = false;
+		//grounded = false;
 		
-		Vec3f pos = entity.transform.position;
-		Vec3f source_pos = pos;
-		Vec3f vel = velocity;
-		Vec3f new_vel = vel;
-		Vec3f dest = pos + vel;
-		Plane first_plane();
-		float small_number = 0.001f;
+		//Vec3f pos = entity.transform.position;
+		//Vec3f source_pos = pos;
+		//Vec3f vel = velocity;
+		//Vec3f new_vel = vel;
+		//Vec3f dest = pos + vel;
+		//Plane first_plane();
+		//float small_number = 0.001f;
 
-		bool done = false;
-		int stop = 0;
+		//bool done = false;
+		//int stop = 0;
+
+		Vec3f pos = entity.transform.position;
+		Vec3f vel = velocity;
+		vel += gravity_force;
+
+		Vec3f final_pos;
 
 		ComponentBodyPair@[]@ colliders = @entity.scene.physics.getNearbyColliders(@this);
+		int colliders_size = colliders.size();
 
-		while(!done)
+		Vec3f dest = pos + vel;
+		Plane first_plane;
+		for (int i = 0; i < 3; i++)
+		{
+			CollisionData data = CollisionData(pos, vel);
+
+			for(int j = 0; j < colliders_size; j++)
+			{
+				CollisionData _data = data;
+				PhysicsComponent@ comp = @colliders[j].comp;
+				if(comp.type == PhysicsComponentType::DYNAMIC)
+					_data.vel -= comp.velocity;
+				
+				_data.start_pos -= comp.entity.transform.position;
+
+				if(physics.Collide(@body, @colliders[j].body, @_data))
+				{
+					if(_data.t < data.t)
+					{
+						data.intersect = true;
+						data.intersect_point = _data.intersect_point;
+						data.t = _data.t;
+					}
+				}
+			}
+
+			if(!data.intersect) // no collision
+			{
+				//return dest;
+				//final_pos = dest;
+				pos = dest;
+				break;
+			}
+
+			float dist = vel.Length() * data.t;
+			float short_dist = Maths::Max(dist - very_close_dist, 0.0f);
+			pos += vel.Normal() * short_dist;
+			if (i == 0)
+			{
+				float long_radius = 1.0f + very_close_dist;
+				first_plane = data.slidingPlane();
+				//dest -= (plane_dist(first_plane, dest) - long_radius) * first_plane.n;
+				dest -= first_plane.normal * (first_plane.signedDistanceTo(dest) - long_radius);
+				vel = dest - pos;
+			}
+			else if (i == 1)
+			{
+				Plane second_plane = data.slidingPlane();
+				Vec3f crease = first_plane.normal.Cross(second_plane.normal).Normal();
+				float dis = (dest - pos).Dot(crease);
+				vel = crease * dis;
+				dest = pos + vel;
+			}
+		}
+		//return pos;
+		final_pos = pos;
+		//print("2 ("+pos.x+", "+pos.y+", "+pos.z+")\n");
+
+		result.needed = true;
+		result.new_position = final_pos;
+		result.new_velocity = vel;
+
+		/*while(!done)
 		{
 			stop++;
 			if(stop > 3)
@@ -141,36 +218,36 @@ class DynamicBodyComponent : PhysicsComponent
 						}
 					}
 				}
-				/*else if (i == 1)
-				{
-					//print("why");
-					Vec3f touch_point = source_pos + vel * data.t;
-					Vec3f intersect_point = data.intersect_point;
-					Vec3f plane_normal = (touch_point - intersect_point).Normal();
-					Plane second_plane = Plane(data.intersect_point, plane_normal);
-
-					Vec3f crease = first_plane.normal.Cross(second_plane.normal).Normal();
-					float dis = (dest - pos).Dot(crease);
-					vel = crease * dis;
-					dest = pos + vel;
-				}*/
+				//else if (i == 1)
+				//{
+				//	//print("why");
+				//	Vec3f touch_point = source_pos + vel * data.t;
+				//	Vec3f intersect_point = data.intersect_point;
+				//	Vec3f plane_normal = (touch_point - intersect_point).Normal();
+				//	Plane second_plane = Plane(data.intersect_point, plane_normal);
+//
+				//	Vec3f crease = first_plane.normal.Cross(second_plane.normal).Normal();
+				//	float dis = (dest - pos).Dot(crease);
+				//	vel = crease * dis;
+				//	dest = pos + vel;
+				//}
 			}
 			else
 			{
 				done = true;
 			}
-		}
+		}*/
 
-		new_vel += push_amount*0.002f;
+		//new_vel += push_amount*0.002f;
 		//new_vel += push_amount.Normal()*0.01f;
 
-		if(!grounded)
-			new_vel += gravity_force;
+		//if(!grounded)
+		//	new_vel += gravity_force;
 
-		result.needed = true;
+		//result.needed = true;
 		//result.id = physics_id;
-		result.new_position = dest;
-		result.new_velocity = new_vel;
+		//result.new_position = dest;
+		//result.new_velocity = new_vel;
 
 		//return result;
 		//entity.SetPosition(dest);
