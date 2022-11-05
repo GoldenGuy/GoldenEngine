@@ -26,15 +26,16 @@ class Game
             ent.AddComponent(ObjRendererComponent("improved_fumo.obj"));
             ent.AddComponent(MoveComponent());
             ent.Init();*/
-            for(int i = 0; i < 10; i++)
+            for(int i = 0; i < 25; i++)
             {
                 Entity@ ent = scene.CreateEntity("ball");
                 //ent.AddComponent(ObjRendererComponent("improved_fumo.obj"));
                 ent.AddComponent(MeshRendererComponent(RenderPrimitives::sphere));
-                ent.AddComponent(DynamicBodyComponent(SphereBody(1)));
+                ent.AddComponent(DynamicBodyComponent(SphereBody(1.0f)));
                 float x = (float(i % 5) - 2.5f) * 2.5f;
                 float z = (float(int(i / 5)) - 2.5f) * 2.5f;
                 ent.SetPositionImmediate(Vec3f(x, 10, z));
+                //ent.SetScaleImmediate(Vec3f(0.5f));
                 ent.Init();
             }
         }
@@ -60,6 +61,18 @@ class Game
         // edit after this
 
         Render::ClearZ();
+
+        //Vec2f start = Vec2f(6,6);
+
+        //GUI::SetFont("none");
+        //string debug = "Fps: "+(1000.0f / getRenderApproximateCorrectionFactor());
+
+        //Vec2f dim;
+        //GUI::GetTextDimensions(debug, dim);
+        //dim.y *= 0.76f;
+        //dim.x += 6;
+        //GUI::DrawRectangle(start, start+dim, SColor(190, 100, 100, 100));
+        //GUI::DrawText(debug, start, SColor(190, 0, 70, 0));
 
         /*Vec2f start = Vec2f(6,6);
 

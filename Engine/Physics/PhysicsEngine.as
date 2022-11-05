@@ -11,20 +11,19 @@ class PhysicsEngine
     Scene@ scene;
     PhysicsComponent@[] physics_components;
     SpatialHash statics_spatial_hash;
-    SpatialHash dynamics_spatial_hash;
-    ResponseResult[] results;
+    //SpatialHash dynamics_spatial_hash;
 
     PhysicsEngine(Scene@ _s)
     {
         @scene = @_s;
-        statics_spatial_hash = SpatialHash(2);
+        statics_spatial_hash = SpatialHash(1);
         //dynamics_spatial_hash = SpatialHash(4);
     }
 
     void Physics()
     {
         //dynamics_spatial_hash.Clear();
-        dynamics_spatial_hash = SpatialHash(4);
+        //dynamics_spatial_hash = SpatialHash(4);
 
         uint[] dynamics;
 
@@ -38,18 +37,20 @@ class PhysicsEngine
             
             else if (physics_components[i].type == PhysicsComponentType::DYNAMIC)
             {
-                dynamics_spatial_hash.Add(@physics_components[i]);
+                //dynamics_spatial_hash.Add(@physics_components[i]);
                 dynamics.push_back(i);
             }
 		}
 
+        ResponseResult[] results;
+
         for(int i = 0; i < dynamics.size(); i++)
         {
             ResponseResult result;
-            result.id = dynamics[i];
-            physics_components[dynamics[i]].Physics(@result);
+            physics_components[dynamics[i]].Physics(result);
             if(result.needed)
             {
+                result.id = dynamics[i];
                 results.push_back(result);
             }
         }
@@ -59,21 +60,55 @@ class PhysicsEngine
             physics_components[results[i].id].entity.SetPosition(results[i].new_position);
             physics_components[results[i].id].velocity = results[i].new_velocity;
         }
-        results.clear();
     }
 
     ComponentBodyPair@[]@ getNearbyColliders(PhysicsComponent@ comp) // only for dynamics!
     {
-        //dictionary copy_buffer;
         ComponentBodyPair@[] output;
         AABB bounds = comp.getBounds();
-        bounds = bounds + (bounds + comp.velocity); // account for movement
+
+        /*int x_start = Maths::Floor(bounds.min.x/statics_spatial_hash.GRID_SIZE);
+        int y_start = Maths::Floor(bounds.min.y/statics_spatial_hash.GRID_SIZE);
+        int z_start = Maths::Floor(bounds.min.z/statics_spatial_hash.GRID_SIZE);
+        int x_end = Maths::Ceil(bounds.max.x/statics_spatial_hash.GRID_SIZE);
+        int y_end = Maths::Ceil(bounds.max.y/statics_spatial_hash.GRID_SIZE);
+        int z_end = Maths::Ceil(bounds.max.z/statics_spatial_hash.GRID_SIZE);
+
+        dictionary copy_buffer;
+        for(int x = x_start; x < x_end; x++)
+        {
+            for(int y = y_start; y < y_end; y++)
+            {
+                for(int z = z_start; z < z_end; z++)
+                {
+                    string hash = statics_spatial_hash.getHash(x, y, z);
+                    if(statics_spatial_hash.hash_map.exists(hash))
+                    {
+                        ComponentBodyPair@[] bucket;
+                        statics_spatial_hash.hash_map.get(hash, bucket);
+
+                        for(int j = 0; j < bucket.size(); j++)
+                        {
+                            ComponentBodyPair@ pair = @bucket[j];
+                            string _hash = pair.comp.phy_id+"_"+pair.body.bod_id;
+                            if(!copy_buffer.exists(_hash) && comp.phy_id != pair.comp.phy_id)
+                            {
+                                output.push_back(pair);
+                                copy_buffer.set(_hash, true);
+                            }
+                        }
+                    }
+                }
+            }
+        }*/
+
+        //bounds = bounds + (bounds + comp.velocity); // account for movement
 
         // get the statics
         statics_spatial_hash.getIn(bounds, output);
 
         // now get the dynamics
-        dynamics_spatial_hash.getIn(bounds, output);
+        //dynamics_spatial_hash.getIn(bounds, output);
         /*for(int i = 0; i < comp.buckets_occupied.size(); i++)
         {
             ComponentBodyPair@[]@ pair_array = @comp.buckets_occupied[i];
@@ -102,8 +137,6 @@ class PhysicsEngine
             case BodyType::SPHERE:
             {
                 SphereBody@ sphere = cast<SphereBody>(first);
-                //Vec3f orig_pos = data.start_pos;
-                //Vec3f orig_vel = data.vel;
 
                 data.start_pos /= sphere.radius;
                 data.vel /= sphere.radius;
@@ -142,129 +175,6 @@ class PhysicsEngine
 
         return data.intersect;
     }
-        
-        /*if(first.type == BodyType::SPHERE && second.type == BodyType::TRIANGLE)
-        {
-            SphereBody@ sphere = cast<SphereBody>(first);
-            data.start_pos /= sphere.radius;
-            data.vel /= sphere.radius;
-            TriangleBody@ triangle = cast<TriangleBody>(second);
-            SphereTriangleCollision(data, triangle.a/sphere.radius, triangle.b/sphere.radius, triangle.c/sphere.radius);
-            if(data.intersect)
-            {
-                data.intersect_point *= sphere.radius;
-                //data.intersect_normal *= radius;
-            }
-            data.start_pos *= sphere.radius;
-            data.vel *= sphere.radius;
-        }*/
-
-        /*else if (first.type == BodyType::SPHERE && second.type == BodyType::SPHERE)
-        {
-            SphereBody@ sphere = cast<SphereBody>(first);
-            SphereBody@ other_sphere = cast<SphereBody>(second);
-            data.start_pos /= sphere.radius;
-            data.vel -= data.other_vel;
-            data.vel /= sphere.radius;
-            RaySphereCollision(data, other_sphere.radius+1.0f);
-            if(data.intersect)
-            {
-                data.intersect_point *= sphere.radius;
-            }
-            if(data.inside)
-            {
-                data.push_out *= sphere.radius;
-                data.push_out.Normalize();
-            }
-            data.start_pos *= sphere.radius;
-            data.vel += data.other_vel;
-            data.vel *= sphere.radius;
-        }*/
-        /*switch (other.shape)
-        {
-            case BodyShape::TRIANGLE:
-            {
-                data.start_pos /= radius;
-                data.vel /= radius;
-                TriangleBody@ other_triangle = cast<TriangleBody>(other);
-                SphereTriangleCollision(data, other_triangle.v1/radius, other_triangle.v2/radius, other_triangle.v3/radius);
-                if(data.intersect)
-                {
-                    data.intersect_point *= radius;
-                    //data.intersect_normal *= radius;
-                }
-                data.start_pos *= radius;
-                data.vel *= radius;
-                break;
-            }
-            case BodyShape::MESH:
-            {
-                data.start_pos /= radius;
-                data.vel /= radius;
-                MeshBody@ other_mesh = cast<MeshBody>(other);
-                CollisionData _data = data;
-                //_data.start_pos /= radius;
-                //_data.vel /= radius;
-                for(int i = 0; i < other_mesh.triangles.size(); i++)
-                {
-                    TriangleBody@ other_triangle = other_mesh.triangles[i];
-                    SphereTriangleCollision(_data, other_triangle.v1/radius, other_triangle.v2/radius, other_triangle.v3/radius);
-                    if(_data.intersect)
-                    {
-                        if(_data.t < data.t)
-                        {
-                            //data.intersect_point = _data.intersect_point*radius;
-                            //data.intersect_normal = _data.intersect_normal*radius;
-                            //data.t = _data.t;
-                            data = _data;
-                            //data.intersect_point *= radius;
-                            //data.intersect_normal *= radius;
-                        }
-                        //data.intersect_point *= radius;
-                        //data.intersect_normal *= radius;
-                    }
-                }
-                if(data.intersect)
-                {
-                    data.intersect_point *= radius;
-                    //data.intersect_normal *= radius;
-                }
-                if(data.inside)
-                {
-                    data.push_out *= radius;
-                    data.push_out.Normalize();
-                }
-                data.start_pos *= radius;
-                data.vel *= radius;
-                //SphereMeshCollision(this, other_mesh, data);
-                break;
-            }
-            case BodyShape::SPHERE:
-            {
-                SphereBody@ other_sphere = cast<SphereBody>(other);
-                data.start_pos /= radius;
-                data.vel /= radius;
-                RaySphereCollision(data, other_sphere.radius+1.0f);
-                if(data.intersect)
-                {
-                    data.intersect_point *= radius;
-                }
-                if(data.inside)
-                {
-                    data.push_out *= radius;
-                    data.push_out.Normalize();
-                }
-                data.start_pos *= radius;
-                data.vel *= radius;
-                break;
-            }
-            default:
-            {
-                //error("SphereBody::Collide - Unsupported body shape");
-                //printTrace();
-            }
-        }
-    }*/
 
     void AddComponent(Component@ component)
 	{

@@ -41,7 +41,7 @@ class PhysicsComponent : Component
         velocity = Vec3f_ZERO;
     }
 
-    void Physics(ResponseResult@ result) // only happens when dynamic
+    void Physics(ResponseResult&out result) // only happens when dynamic
     {
         
     }

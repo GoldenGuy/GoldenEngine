@@ -4,14 +4,13 @@
 
 class SpatialHash
 {
-    Dictionary hash_map;
+    dictionary hash_map;
 
     float GRID_SIZE;
 
     SpatialHash(float grid)
     {
         GRID_SIZE = grid;
-        hash_map = Dictionary();
     }
 
     void Add(PhysicsComponent@ comp)
@@ -29,18 +28,18 @@ class SpatialHash
             for(int i = 0; i < tris.size(); i++)
             {
                 AABB bounds = tris[i].bounds * comp.entity.transform;
-                int x_start = Maths::Floor(bounds.min.x/GRID_SIZE);
-                int y_start = Maths::Floor(bounds.min.y/GRID_SIZE);
-                int z_start = Maths::Floor(bounds.min.z/GRID_SIZE);
-                int x_end = Maths::Ceil(bounds.max.x/GRID_SIZE);
-                int y_end = Maths::Ceil(bounds.max.y/GRID_SIZE);
-                int z_end = Maths::Ceil(bounds.max.z/GRID_SIZE);
+                int x_start = bounds.min.x/GRID_SIZE;
+                int y_start = bounds.min.y/GRID_SIZE;
+                int z_start = bounds.min.z/GRID_SIZE;
+                int x_end = bounds.max.x/GRID_SIZE;
+                int y_end = bounds.max.y/GRID_SIZE;
+                int z_end = bounds.max.z/GRID_SIZE;
 
-                for(int x = x_start; x < x_end; x++)
+                for(int x = x_start; x <= x_end; x++)
                 {
-                    for(int y = y_start; y < y_end; y++)
+                    for(int y = y_start; y <= y_end; y++)
                     {
-                        for(int z = z_start; z < z_end; z++)
+                        for(int z = z_start; z <= z_end; z++)
                         {
                             string hash = getHash(x, y, z);
                             if(hash_map.exists(hash))
@@ -65,18 +64,18 @@ class SpatialHash
         else
         {
             AABB bounds = comp.getBounds();
-            int x_start = Maths::Floor(bounds.min.x/GRID_SIZE);
-            int y_start = Maths::Floor(bounds.min.y/GRID_SIZE);
-            int z_start = Maths::Floor(bounds.min.z/GRID_SIZE);
-            int x_end = Maths::Ceil(bounds.max.x/GRID_SIZE);
-            int y_end = Maths::Ceil(bounds.max.y/GRID_SIZE);
-            int z_end = Maths::Ceil(bounds.max.z/GRID_SIZE);
+            int x_start = bounds.min.x/GRID_SIZE;
+            int y_start = bounds.min.y/GRID_SIZE;
+            int z_start = bounds.min.z/GRID_SIZE;
+            int x_end = bounds.max.x/GRID_SIZE;
+            int y_end = bounds.max.y/GRID_SIZE;
+            int z_end = bounds.max.z/GRID_SIZE;
 
-            for(int x = x_start; x < x_end; x++)
+            for(int x = x_start; x <= x_end; x++)
             {
-                for(int y = y_start; y < y_end; y++)
+                for(int y = y_start; y <= y_end; y++)
                 {
-                    for(int z = z_start; z < z_end; z++)
+                    for(int z = z_start; z <= z_end; z++)
                     {
                         string hash = getHash(x, y, z);
                         if(hash_map.exists(hash))
@@ -85,22 +84,12 @@ class SpatialHash
                             hash_map.get(hash, bucket);
                             bucket.push_back(@ComponentBodyPair(@comp, @comp.body));
                             hash_map.set(hash, bucket);
-
-                            /*if(comp.type == PhysicsComponentType::DYNAMIC)
-                            {
-                                comp.buckets_occupied.push_back(@bucket);
-                            }*/
                         }
                         else
                         {
                             ComponentBodyPair@[] bucket;
                             bucket.push_back(@ComponentBodyPair(@comp, @comp.body));
                             hash_map.set(hash, bucket);
-
-                            /*if(comp.type == PhysicsComponentType::DYNAMIC)
-                            {
-                                comp.buckets_occupied.push_back(@bucket);
-                            }*/
                         }
                     }
                 }
@@ -110,19 +99,19 @@ class SpatialHash
 
     void getIn(AABB&in bounds, ComponentBodyPair@[]& colliders)
     {
-        int x_start = Maths::Floor(bounds.min.x/GRID_SIZE);
-        int y_start = Maths::Floor(bounds.min.y/GRID_SIZE);
-        int z_start = Maths::Floor(bounds.min.z/GRID_SIZE);
-        int x_end = Maths::Ceil(bounds.max.x/GRID_SIZE);
-        int y_end = Maths::Ceil(bounds.max.y/GRID_SIZE);
-        int z_end = Maths::Ceil(bounds.max.z/GRID_SIZE);
+        int x_start = bounds.min.x/GRID_SIZE;
+        int y_start = bounds.min.y/GRID_SIZE;
+        int z_start = bounds.min.z/GRID_SIZE;
+        int x_end = bounds.max.x/GRID_SIZE;
+        int y_end = bounds.max.y/GRID_SIZE;
+        int z_end = bounds.max.z/GRID_SIZE;
 
         dictionary copy_buffer;
-        for(int x = x_start; x < x_end; x++)
+        for(int x = x_start; x <= x_end; x++)
         {
-            for(int y = y_start; y < y_end; y++)
+            for(int y = y_start; y <= y_end; y++)
             {
-                for(int z = z_start; z < z_end; z++)
+                for(int z = z_start; z <= z_end; z++)
                 {
                     string hash = getHash(x, y, z);
                     if(hash_map.exists(hash))
@@ -133,24 +122,17 @@ class SpatialHash
                         for(int j = 0; j < bucket.size(); j++)
                         {
                             ComponentBodyPair@ pair = @bucket[j];
-                            string hash = pair.comp.phy_id+"_"+pair.body.bod_id;
-                            if(!copy_buffer.exists(hash))
+                            string clone_hash = pair.comp.phy_id+"_"+pair.body.bod_id;
+                            if(!copy_buffer.exists(clone_hash))
                             {
                                 colliders.push_back(pair);
-                                copy_buffer.set(hash, true);
+                                copy_buffer.set(clone_hash, true);
                             }
                         }
                     }
                 }
             }
         }
-    }
-
-    void Clear()
-    {
-        hash_map.deleteAll();
-        //dictionary _new;
-        //hash_map = _new;
     }
 
     string getHash(int x, int y, int z)
@@ -175,6 +157,12 @@ class ComponentBodyPair
         @body = @_body;
         bounds = _body.getBounds() * _comp.entity.transform;
     }
+}
+
+class PairBucket
+{
+    ComponentBodyPair[] data;
+    int size;
 }
 
 class CollisionData
@@ -497,174 +485,3 @@ void sphIntersect(CollisionData@ colPackage, float ra )
     }
     //return vec2( -b-h, -b+h );
 }
-
-/*
-void SphereTriangleCollision(CollisionData@ data, Vec3f triangle_v1, Vec3f triangle_v2, Vec3f triangle_v3)
-{
-    Vec3f pos = data.start_pos;// / sphere.radius;
-    Vec3f vel = data.vel;// / sphere.radius;
-    
-    Vec3f triangle_normal = (triangle_v2 - triangle_v1).Cross(triangle_v3 - triangle_v1).Normal();
-
-    float normal_dot_vel = triangle_normal.Dot(vel);
-
-    // check if moving at triangle's front face, exit if at back face
-	if (normal_dot_vel > 0.0f)
-    {
-        //print("moving in direction of triangle's normal");
-        return;
-    }
-
-    float t0 = 0.0f;
-    float t1 = 0.0f;
-    bool embedded_in_plane = false;
-
-    float signed_dist_to_plane = pos.Dot(triangle_normal) - triangle_normal.Dot(triangle_v1); // MIGHT BE + or - idk
-
-    //int collision_type = -1;
-    bool collides = false;
-    Vec3f intersect_point;
-    float t = 1.0f;
-
-    // we moving parallel to the plane
-    if(normal_dot_vel == 0.0f)
-    {
-        // and we are not touching triangle
-        if (Maths::Abs(signed_dist_to_plane) >= 1.0f)
-        {
-            // no collision possible 
-            //print("moving parallel to triangle's plane, not touching");
-            return;
-        }
-        else
-        {
-            //print("embedded_in_plane");
-            // sphere is in plane in whole range [0..1]
-            embedded_in_plane = true;
-            t0 = 0.0f;
-            t1 = 1.0f;
-        }
-    }
-    else
-    {
-        // N dot D is not 0, calc intersect interval
-        t0 = (-1.0f - signed_dist_to_plane) / normal_dot_vel;
-        t1 = ( 1.0f - signed_dist_to_plane) / normal_dot_vel;
-
-        // swap so t0 < t1
-        if (t0 > t1)
-        {
-            float temp = t1;
-            t1 = t0;
-            t0 = temp;
-        }
-
-        // check that at least one result is within range
-        if (t0 > 1.0f || t1 < 0.0f)
-        {
-            // both values outside range [0,1] so no collision
-            //print("no collision possible");
-            return;
-        }
-
-        // clamp to [0,1]
-        if (t0 < 0.0f) { t0 = 0.0f; }
-        if (t1 < 0.0f) { t1 = 0.0f; }
-        if (t0 > 1.0f) { t0 = 1.0f; }
-        if (t1 > 1.0f) { t1 = 1.0f; }
-    }
-
-    //print("t: "+t0+" "+t1);
-
-    if(!embedded_in_plane)
-    {
-        Vec3f plane_intersect_point = pos - triangle_normal;
-        Vec3f temp = vel * t0;
-        plane_intersect_point += temp;
-
-        //print("plane_intersect_point: "+plane_intersect_point.FloatString());
-        //print("triangle_v1: "+triangle_v1.FloatString());
-        //print("triangle_v2: "+triangle_v2.FloatString());
-        //print("triangle_v3: "+triangle_v3.FloatString());
-
-        if(PointInsideTriangle(plane_intersect_point, triangle_v1, triangle_v2, triangle_v3))
-        {
-            //print("inside triangle");
-            intersect_point = plane_intersect_point;
-            collides = true;
-            t = t0;
-            //collision_type = 0;
-        }
-    }
-
-    if(collides)
-    {
-        // if closer than previous intersection
-        if(t <= data.t || !data.intersect)
-        {
-            data.t = t;
-            data.intersect_point = intersect_point;// * sphere.radius;
-            data.intersect = true;
-            //data.collision_type = collision_type;
-            //print("collision");
-            return;
-        }
-        else
-        {
-            //print("too far?");
-        }
-    }
-}
-
-bool PointInsideTriangle(Vec3f point, Vec3f a, Vec3f b, Vec3f c)
-{
-    Vec3f v0 = c - a;
-		Vec3f v1 = b - a;
-		Vec3f v2 = point - a;
-
-		float dot00 = v0.Dot(v0);
-		float dot01 = v0.Dot(v1);
-		float dot02 = v0.Dot(v2);
-		float dot11 = v1.Dot(v1);
-		float dot12 = v1.Dot(v2);
-
-		float invDenom = 1.0f / (dot00 * dot11 - dot01 * dot01);
-		float u = (dot11 * dot02 - dot01 * dot12) * invDenom;
-		float v = (dot00 * dot12 - dot01 * dot02) * invDenom;
-
-		return ((u >= 0.0f) && (v >= 0.0f) && (u + v < 1.0f));
-}
-
-void RaySphereCollision(CollisionData@ data, float sphere_radius)
-{
-    Vec3f oc = data.start_pos;
-    if(oc.Length() < sphere_radius)
-    {
-        //data.intersect = false;
-        data.inside = true;
-        //data.t = (oc.Length() / sphere_radius)-1.0f;
-        //data.intersect_point = Vec3f();
-        data.push_out = data.start_pos.Normal();
-        return;
-    }
-    float b = oc.Dot(data.vel.Normal());
-    float c = oc.Dot(oc) - sphere_radius*sphere_radius;
-    float h = b*b - c;
-    if(h<0.0) // no intersection
-    {
-        //print("h: " + h);
-        return;
-    }
-    h = Maths::Sqrt( h );
-    float dist = -b-h;
-    float time = 1.0f-(dist / data.vel.Length());
-    //float vel_length = data.vel.Length();
-    //if(dist > 0.0 && data.t > dist)
-    if(time > 0.0f && time < 1.0f && data.t > time)
-    {
-        //print("time: " + time);
-        data.t = time;
-        data.intersect_point = Vec3f();
-        data.intersect = true;
-    }
-}*/
