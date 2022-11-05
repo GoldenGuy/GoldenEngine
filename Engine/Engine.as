@@ -1,31 +1,33 @@
 
 #include "Maths.as"
+#include "Debug.as"
 #include "DefaultModels.as"
-#include "Component.as"
-#include "ComponentIncludes.as"
 #include "Transform.as"
 #include "Camera.as"
-#include "Entity.as"
+#include "EntityManager.as"
+#include "RenderEngine.as"
+#include "PhysicsEngine.as"
+#include "Component.as"
 #include "Scene.as"
-#include "PhysicsCommon.as"
 #include "Game.as"
 
 namespace GoldEngine
 {
-	dictionary ComponentDB;
+	float render_delta = 0.0f;
 	
 	Game@ game;
 	
 	void Init()
 	{
-		Game newgame = Game();
-		@game = @newgame;
+		Print("Init", PrintColor::GRN);
+		@game = @Game();
 		SaveToRules();
 		game.Init();
 	}
 
 	void Tick()
 	{
+		render_delta = 0.0f;
 		game.Tick();
 	}
 
@@ -42,6 +44,9 @@ namespace GoldEngine
 		else
 		{
 			game.Render();
+
+			if(Menu::getMainMenu() is null)
+            	render_delta += getRenderApproximateCorrectionFactor();
 		}
 	}
 

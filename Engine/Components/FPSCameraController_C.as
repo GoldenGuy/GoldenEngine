@@ -1,7 +1,11 @@
 
-class FPSCameraController : Component, IRenderable, ITickable
+class FPSCameraController : Component
 {
-    string getName() const {return "fps_cam";}
+    FPSCameraController()
+    {
+        hooks = CompHooks::TICK | CompHooks::RENDER;
+        name = "FPSCameraController";
+    }
     
     float sens = 50.0f; // 1-100
     float old_pitch, pitch, old_yaw, yaw;
@@ -9,8 +13,11 @@ class FPSCameraController : Component, IRenderable, ITickable
     
     void Init()
     {
-        old_pitch = pitch = old_yaw = yaw = 0;
         angle = entity.scene.camera.angle;
+        pitch = old_pitch = yaw = old_yaw = 0;
+        //Vec3f euler = angle.ToEuler();
+        //pitch = old_pitch = rtd(euler.x);
+        //yaw = old_yaw = rtd(euler.y);
         getControls().setMousePosition(Vec2f(getScreenWidth(), getScreenHeight())/2.0f);
     }
 
@@ -40,7 +47,6 @@ class FPSCameraController : Component, IRenderable, ITickable
                 yaw += 360;
             }
         }
-        
     }
 
     void Render()
@@ -48,8 +54,8 @@ class FPSCameraController : Component, IRenderable, ITickable
         getHUD().ShowCursor();
         if(Menu::getMainMenu() is null) getHUD().HideCursor();
         
-        float interp_pitch = Maths::Lerp(old_pitch, pitch, GoldEngine::game.render_delta);
-        float interp_yaw = Maths::Lerp(old_yaw, yaw, GoldEngine::game.render_delta);
+        float interp_pitch = Maths::Lerp(old_pitch, pitch, GoldEngine::render_delta);
+        float interp_yaw = Maths::Lerp(old_yaw, yaw, GoldEngine::render_delta);
         angle = Quaternion(dtr(interp_pitch), dtr(interp_yaw), 0);
         entity.scene.camera.angle = angle;
     }

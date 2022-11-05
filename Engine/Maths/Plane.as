@@ -27,12 +27,6 @@ class Plane
         normal.Normalize();
         origin = p1;
         plane_constant = -(normal.Dot(origin));
-        /*float[] _equation(4);
-        _equation[0] = normal.x;
-        _equation[1] = normal.y;
-        _equation[2] = normal.z;
-        _equation[3] = -(normal.Dot(origin));*/
-        //equation = _equation;
     }
 
     bool isFrontFacingTo(Vec3f direction)

@@ -1,51 +1,36 @@
 
+#include "Scenes.as"
+
 class Scene
 {
 	Camera camera;
-	Entity@[] entities;
-	uint entity_id_tracker = 0;
 
-	comp_func@[] tickables;
-	comp_func@[] renderables; // make a custom class instead
-
-	uint[] update_transforms;
-
-	PhysicsScene physics_scene;
+	EntityManager ent_manager;
+	RenderEngine renderer;
+	PhysicsEngine physics;
 
 	dictionary data;
 
-	void PreInit() // cant do this in constructor because of camera and phys world
+	void PreInit() // cant do this in constructor because sublcasses need this class already instanced
 	{
-		entities.clear();
-		tickables.clear();
-		renderables.clear();
-
 		camera = Camera(this);
-		physics_scene = PhysicsScene(this);
+		ent_manager = EntityManager(this);
+		renderer = RenderEngine(this);
+		physics = PhysicsEngine(this);
 	}
 
 	void Init()
 	{
-		for(uint i = 0; i < entities.size(); i++)
-		{
-			entities[i].Init();
-		}
+		ent_manager.Init();
 	}
 
 	void Tick()
 	{
-		for(int i = 0; i < update_transforms.size(); i++)
-		{
-			entities[update_transforms[i]].UpdateTransforms();
-		}
-		update_transforms.clear();
+		ent_manager.UpdateTransforms();
+		
+		physics.Physics();
 
-		physics_scene.Tick();
-
-		for(uint i = 0; i < tickables.size(); i++)
-		{
-			tickables[i]();
-		}
+		ent_manager.Tick();
 	}
 
 	void Render()
@@ -62,49 +47,34 @@ class Scene
 
 		Render::SetViewTransform(camera.getViewMatrix());
 
-		physics_scene.DebugDraw();
-
-		//Render::SetFog(color_black, SMesh::LINEAR, 0, 200, 0.5, true, true);
-
-		for(uint i = 0; i < renderables.size(); i++)
-		{
-			renderables[i]();
-		}
+		renderer.Render();
 	}
 
 	Entity@ CreateEntity(string name)
 	{
-		Entity entity = Entity(name, this);
-		entity.id = entity_id_tracker++;
-		entities.push_back(@entity);
-		return @entity;
-	}
-
-	void UpdateTransforms(Entity@ entity)
-	{
-		update_transforms.push_back(entity.id);
+		return @ent_manager.CreateEntity(name);
 	}
 
 	void AddComponent(Component@ component)
 	{
-		
-		
-		ITickable@ tickable = cast<ITickable>(component);
-		if(tickable !is null)
-		{
-			tickables.push_back(@comp_func(tickable.Tick));
-		}
-
-		IRenderable@ renderable = cast<IRenderable>(component);
-		if(renderable !is null)
-		{
-			renderables.push_back(@comp_func(renderable.Render));
-		}
-
-		Physical@ physical = cast<Physical>(component);
-		if(physical !is null)
-		{
-			physics_scene.AddPhysicsBody(@physical);
-		}
+		if(component.hasFlag(CompHooks::TICK))
+        {
+            ent_manager.AddComponent(@component);
+        }
+        if(component.hasFlag(CompHooks::RENDER))
+        {
+            renderer.AddComponent(@component);
+        }
+        if(component.hasFlag(CompHooks::PHYSICS))
+        {
+            physics.AddComponent(@component);
+        }
 	}
+}
+
+Scene NewScene() // haha :)
+{
+	Scene output = Scene();
+	output.PreInit();
+	return output;
 }

@@ -1,5 +1,6 @@
 
 #include "Vec3f.as"
+#include "Dictionary.as"
 #include "AABB.as"
 #include "Quaternion.as"
 #include "Plane.as"
@@ -69,7 +70,80 @@ namespace Matrix
 	}
 }
 
-float get_lowest_root(float a, float b, float c, float max)
+bool checkPointInTriangle(Vec3f point, Vec3f p1, Vec3f p2, Vec3f p3)
+{
+	Vec3f u, v, w, vw, vu, uw, uv;
+
+	u = p2 - p1;
+	v = p3 - p1;
+	w = point - p1;
+
+	vw = v.Cross(w);
+	vu = v.Cross(u);
+
+	if (vw.Dot(vu) < 0.0f)
+	{
+		return false;
+	}
+
+	uw = u.Cross(w);
+	uv = u.Cross(v);
+
+	if (uw.Dot(uv) < 0.0f)
+	{
+		return false;
+	}
+
+	float d = uv.Length();
+	float r = vw.Length() / d;
+	float t = uw.Length() / d;
+
+	return ((r + t) <= 1.0f);
+}
+
+bool getLowestRoot(float a, float b, float c, float maxR, float&out root)
+{
+	// Check if a solution exists
+	float determinant = (b * b) - (4.0f * a * c);
+
+	// If determinant is negative it means no solutions.
+	if (determinant < 0.0f) return false;
+
+	// calculate the two roots: (if determinant == 0 then
+	// x1==x2 but let’s disregard that slight optimization)
+	float sqrtD = Maths::Sqrt(determinant);
+
+	// fix divide by null
+	if(a == 0) a = 0.00001f;
+
+	float r1 = (-b - sqrtD) / (2.0f * a);
+	float r2 = (-b + sqrtD) / (2.0f * a);
+
+	// Sort so x1 <= x2
+	if (r1 > r2)
+	{
+		float temp = r2;
+		r2 = r1;
+		r1 = temp;
+	}
+	// Get lowest root:
+	if (r1 > 0 && r1 < maxR)
+	{
+		root = r1;
+		return true;
+	}
+	// It is possible that we want x2 - this can happen
+	// if x1 < 0
+	if (r2 > 0 && r2 < maxR)
+	{
+		root = r2;
+		return true;
+	}
+	// No (valid) solutions
+	return false;
+}
+
+/*float get_lowest_root(float a, float b, float c, float max)
 {
 	float determinant = b*b - 4.0*a*c;
 
@@ -113,4 +187,4 @@ class Triangle
 		b = _b;
 		c = _c;
 	}
-}
+}*/

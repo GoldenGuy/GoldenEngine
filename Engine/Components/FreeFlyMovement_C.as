@@ -1,7 +1,11 @@
 
-class FreeFlyMovement : Component, ITickable, IRenderable
+class FreeFlyMovement : Component
 {
-    string getName() const {return "free_fly";}
+    FreeFlyMovement()
+    {
+        hooks = CompHooks::TICK | CompHooks::RENDER;
+        name = "FreeFlyMovement";
+    }
     
     void Tick()
     {
@@ -45,6 +49,6 @@ class FreeFlyMovement : Component, ITickable, IRenderable
 
     void Render()
     {
-        entity.scene.camera.position = entity.transform.old_position.Lerp(entity.transform.position, GoldEngine::game.render_delta);
+        entity.scene.camera.position = entity.transform.old_position.Lerp(entity.transform.position, GoldEngine::render_delta);
     }
 }

@@ -56,6 +56,27 @@ class Quaternion
         return r;
     }
 
+    Vec3f ToEuler()
+    {
+        Vec3f output;
+
+        float t0 = 2.0f * (w * x + y * z);
+        float t1 = 1.0f - 2.0f * (x * x + y * y);
+        output.x = Maths::ATan2(t0, t1);
+     
+        float t2 = +2.0 * (w * y - z * x);
+        t2 = (t2 > 1.0f) ? 1.0f : t2;
+        t2 = (t2 < -1.0f) ? -1.0f : t2;
+        output.y = Maths::ASin(t2);
+     
+        float t3 = 2.0f * (w * z + x * y);
+        float t4 = 1.0f - 2.0f * (y * y + z * z);
+        output.z = Maths::ATan2(t3, t4);
+
+
+        return output;
+    }
+
     void opMulAssign(float f)
     {
         x *= f;

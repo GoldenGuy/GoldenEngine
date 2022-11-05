@@ -1,17 +1,27 @@
 
-class MoveComponent : Component, ITickable
+class MoveComponent : Component
 {
-    string getName() const {return "move_c";}
+    uint spawn_time = 0;
+    
+    MoveComponent()
+    {
+        hooks = CompHooks::TICK;
+        name = "MoveComponent";
+    }
+
+    void Init()
+    {
+        spawn_time = getGameTime();
+    }
 
     void Tick()
     {
-        //entity.position.x = Maths::Sin(dtr(getGameTime()) * 2.7f) * 4.0f;
-        //entity.position.y = Maths::Cos(dtr(getGameTime()) * 1.7f * 2.0f) * 2.0f;
-        //entity.position.z = 4.0f;
         Vec3f new_pos;
-        new_pos.x = Maths::Sin(dtr(getGameTime()) * 3.7f) * 5.0f;
-        new_pos.y = Maths::Cos(dtr(getGameTime()) * 3.7f) * 3.0f - 3.0f;
-        new_pos.z = 4.0f;
+        uint val = getGameTime()-spawn_time;
+        //print("getGameTime(): "+getGameTime());
+        new_pos.x = Maths::Sin(dtr(val) * 2.7f) * 5.0f;
+        new_pos.y = Maths::Cos(dtr(val) * 3.7f) * 3.0f + 6.0f;
+        new_pos.z = 0.0f;
         entity.SetPosition(new_pos);
     }
 }
