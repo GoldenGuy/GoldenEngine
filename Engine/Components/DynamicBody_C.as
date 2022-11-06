@@ -1,6 +1,4 @@
 
-const float very_close_dist = 0.005f;
-
 class DynamicBodyComponent : PhysicsComponent
 {
     PhysicsEngine@ physics;
@@ -18,6 +16,8 @@ class DynamicBodyComponent : PhysicsComponent
 
 	void Physics(ResponseResult&out result)
 	{
+		const float very_close_dist = 0.005f;
+
 		Vec3f pos = entity.transform.position;
 		Vec3f vel = velocity;
 		vel += gravity_force;

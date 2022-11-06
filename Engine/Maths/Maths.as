@@ -119,7 +119,7 @@ bool getLowestRoot(float a, float b, float c, float maxR, float&out root)
 	float sqrtD = Maths::Sqrt(determinant);
 
 	// fix divide by null
-	if(a == 0) return false;//a = 0.000001f;
+	if(a == 0) a = 0.00001f;
 
 	float r1 = (-b - sqrtD) / (2.0f * a);
 	float r2 = (-b + sqrtD) / (2.0f * a);

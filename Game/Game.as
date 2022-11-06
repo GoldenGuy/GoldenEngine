@@ -64,6 +64,10 @@ class Game
 
         Render::ClearZ();
 
+        float[] model;
+		Matrix::MakeIdentity(model);
+        Render::SetModelTransform(model);
+
         RenderPrimitives::orientation_guide.RenderMeshWithMaterial();
 
         //Vec2f start = Vec2f(6,6);

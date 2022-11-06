@@ -1,6 +1,4 @@
 
-//const float very_close_dist = 0.005f;
-
 class PlayerPhysicsComponent : PhysicsComponent
 {
     PhysicsEngine@ physics;
@@ -19,6 +17,8 @@ class PlayerPhysicsComponent : PhysicsComponent
 
 	void Physics(ResponseResult&out result)
 	{
+		const float very_close_dist = 0.0001f;
+
 		Vec3f pos = entity.transform.position;
 		Vec3f vel = velocity;
 		vel += gravity_force;
@@ -81,6 +81,8 @@ class PlayerPhysicsComponent : PhysicsComponent
 			}
 		}
 		final_pos = pos;
+		vel.x *= 0.8f;
+		vel.z *= 0.8f;
 
 		result.needed = true;
 		result.new_position = final_pos;
@@ -89,15 +91,33 @@ class PlayerPhysicsComponent : PhysicsComponent
 
     void Tick()
     {
-        Vec3f angle = Vec3f(0,0,1);
-        angle = entity.scene.camera.angle * angle;
+        Vec3f forward = Vec3f(0,0,1);
+		Vec3f right = Vec3f(1,0,0);
+        forward = entity.scene.camera.angle * forward;
+		forward.y = 0;
+		forward.Normalize();
+		right = entity.scene.camera.angle * right;
+		right.y = 0;
+		right.Normalize();
         if(getControls().isKeyPressed(KEY_KEY_W))
         {
-            velocity += angle*0.05f;
+            velocity += forward*0.05f;
         }
         if(getControls().isKeyPressed(KEY_KEY_S))
         {
-            velocity -= angle*0.05f;
+            velocity -= forward*0.05f;
         }
+		if(getControls().isKeyPressed(KEY_KEY_D))
+        {
+            velocity += right*0.05f;
+        }
+        if(getControls().isKeyPressed(KEY_KEY_A))
+        {
+            velocity -= right*0.05f;
+        }
+		if(getControls().isKeyJustPressed(KEY_SPACE))
+		{
+			velocity.y = 0.12f;
+		}
     }
 }
