@@ -243,4 +243,44 @@ namespace RenderPrimitives
         Vertex(0.262869,-0.525738,-0.809012,0,1),
         Vertex(0.723607,-0.44722,-0.525725,1,1)
     };
+
+    // x - left - red
+    // y - up - green
+    // z - at viewer - blue
+    Vertex[] orientation_guide_verts = {
+        Vertex(0, 0, 0, 0.5f, 0.5f, SColor(0xFFAA0000)), // x
+        Vertex(1, 0, 0, 0.5f, 0.5f, SColor(0xFFAA0000)),
+        Vertex(0, -0.25f/2.0f, 0, 0.5f, 0.5f, SColor(0xFFAA0000)),
+        Vertex(0, 0, -0.25f/2.0f, 0.5f, 0.5f, SColor(0xFFAA0000)),
+
+        Vertex(0, 0, 0, 0.5f, 0.5f, SColor(0xFF00AA00)), // y
+        Vertex(0, 1, 0, 0.5f, 0.5f, SColor(0xFF00AA00)),
+        Vertex(0, 0, -0.25f/2.0f, 0.5f, 0.5f, SColor(0xFF00AA00)),
+        Vertex(-0.25f/2.0f, 0, 0, 0.5f, 0.5f, SColor(0xFF00AA00)),
+
+        Vertex(0, 0, 0, 0.5f, 0.5f, SColor(0xFF0000AA)), // z
+        Vertex(0, 0, 1, 0.5f, 0.5f, SColor(0xFF0000AA)),
+        Vertex(0, -0.25f/2.0f, 0, 0.5f, 0.5f, SColor(0xFF0000AA)),
+        Vertex(-0.25f/2.0f, 0, 0, 0.5f, 0.5f, SColor(0xFF0000AA))
+    };
+
+    SMesh orientation_guide;
+    void orientation_guide_setup()
+    {
+        orientation_guide.SetVertex(orientation_guide_verts);
+        uint16[] indices = {0,1,2,0,3,1,3,2,1,
+                            4,5,6,4,7,5,7,6,5,
+                            8,9,10,8,11,9,11,10,9};
+        orientation_guide.SetIndices(indices);
+        SMaterial material;
+        material.DisableAllFlags();
+        material.AddTexture("pixel.png");
+        material.SetFlag(SMaterial::ZBUFFER, true);
+        material.SetFlag(SMaterial::ZWRITE_ENABLE, true);
+        //material.SetFlag(SMaterial::BACK_FACE_CULLING, false);
+        //material.SetFlag(SMaterial::WIREFRAME, true);
+        material.SetFlag(SMaterial::COLOR_MASK, true);
+        orientation_guide.SetMaterial(material);
+        orientation_guide.BuildMesh();
+    }
 }

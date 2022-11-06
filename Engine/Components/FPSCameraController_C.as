@@ -8,21 +8,19 @@ class FPSCameraController : Component
     }
     
     float sens = 50.0f; // 1-100
-    float old_pitch, pitch, old_yaw, yaw;
+    float pitch, yaw = 0;
+    Quaternion old_angle;
     Quaternion angle;
     
     void Init()
     {
-        angle = entity.scene.camera.angle;
-        pitch = old_pitch = yaw = old_yaw = 0;
-        //Vec3f euler = angle.ToEuler();
-        //pitch = old_pitch = rtd(euler.x);
-        //yaw = old_yaw = rtd(euler.y);
+        angle = old_angle = entity.scene.camera.angle;
         getControls().setMousePosition(Vec2f(getScreenWidth(), getScreenHeight())/2.0f);
     }
 
     void Tick()
     {
+        old_angle = angle;
         if(Menu::getMainMenu() is null && isWindowActive() && isWindowFocused())
         {
             Vec2f scr_center = Vec2f(getScreenWidth(), getScreenHeight())/2.0f;
@@ -32,20 +30,29 @@ class FPSCameraController : Component
             diff *= 0.005f;
             diff *= sens;
 
-            old_pitch = pitch;
+            float old_pitch = pitch;
+            float old_yaw = yaw;
             pitch = Maths::Clamp(pitch + diff.y, -90, 90);
-            old_yaw = yaw;
             yaw += diff.x;
+            bool change_old = false;
             if(yaw >= 360)
             {
-                old_yaw -= 360;
                 yaw -= 360;
+                old_yaw -= 360;
+                change_old = true;
             }
-            else if(yaw < 0)
+            else if (yaw < 0)
             {
-                old_yaw += 360;
                 yaw += 360;
+                old_yaw += 360;
+                change_old = true;
             }
+            if(change_old)
+            {
+                old_angle = Quaternion(dtr(old_pitch), dtr(old_yaw), 0);
+            }
+
+            angle = Quaternion(dtr(pitch), dtr(yaw), 0);
         }
     }
 
@@ -54,9 +61,9 @@ class FPSCameraController : Component
         getHUD().ShowCursor();
         if(Menu::getMainMenu() is null) getHUD().HideCursor();
         
-        float interp_pitch = Maths::Lerp(old_pitch, pitch, GoldEngine::render_delta);
-        float interp_yaw = Maths::Lerp(old_yaw, yaw, GoldEngine::render_delta);
-        angle = Quaternion(dtr(interp_pitch), dtr(interp_yaw), 0);
-        entity.scene.camera.angle = angle;
+        Quaternion new_angle = old_angle.Lerp(angle, GoldEngine::render_delta);
+        entity.scene.camera.angle = new_angle;
+
+        entity.scene.camera.position = entity.transform.old_position.Lerp(entity.transform.position, GoldEngine::render_delta);
     }
 }

@@ -10,7 +10,7 @@ class Camera
     {
         @scene = @_scene;
         position = Vec3f();
-        angle = Quaternion(Vec3f(0, 0, -1), 1);
+        angle = Quaternion();//Vec3f(0, 0, 0), 1);
     }
 
     float[] getViewMatrix()
@@ -18,7 +18,7 @@ class Camera
         float[] view;
         Matrix::MakeIdentity(view);
 
-        angle.getMatrix(view);
+        angle.getMatrixTransposed(view); // negative since we need to actually move objects away
 
         float[] temp_mat;
 		Matrix::MakeIdentity(temp_mat);

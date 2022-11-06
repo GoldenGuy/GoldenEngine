@@ -1,8 +1,9 @@
 
 void CreateTestLevel(Scene@ scene)
 {
-    //scene.camera.position = Vec3f(0, -6.5f, -4);
-    scene.camera.angle = Quaternion(-0.212f, 0.673f, -0.210f, -0.676f);
+    //                             (float roll, float pitch, float yaw)
+    //scene.camera.angle = Quaternion(dtr(10), 0, 0);
+    scene.camera.angle = Quaternion(dtr(45), 0, 0);
 
     {
         Entity@ ent = scene.CreateEntity("world");
@@ -23,9 +24,10 @@ void CreateTestLevel(Scene@ scene)
 
     {
         Entity@ ent = scene.CreateEntity("player camera");
-        //ent.AddComponent(FPSCameraController());
-        ent.AddComponent(FreeFlyMovement());
-        ent.SetPositionImmediate(Vec3f(14, 12, 0));
+        ent.AddComponent(FPSCameraController());
+        //ent.AddComponent(FreeFlyMovement());
+        ent.AddComponent(PlayerPhysicsComponent(SphereBody(1)));
+        ent.SetPositionImmediate(Vec3f(0, 10, 0));
     }
 }
 

@@ -25,6 +25,11 @@ float cos(float deg)
 	return Maths::Cos(dtr(deg));
 }
 
+bool equals(float a, float b, float tolerance = 0.000001f)
+{
+    return (a + tolerance >= b) && (a - tolerance <= b);
+}
+
 float[] Matrix_Multiply(const float[]&in first, const float[]&in second) // inbuilt function is retarded
 {
 	float[] new(16);
@@ -114,7 +119,7 @@ bool getLowestRoot(float a, float b, float c, float maxR, float&out root)
 	float sqrtD = Maths::Sqrt(determinant);
 
 	// fix divide by null
-	if(a == 0) a = 0.00001f;
+	if(a == 0) return false;//a = 0.000001f;
 
 	float r1 = (-b - sqrtD) / (2.0f * a);
 	float r2 = (-b + sqrtD) / (2.0f * a);

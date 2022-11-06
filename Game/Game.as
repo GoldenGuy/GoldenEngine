@@ -11,6 +11,8 @@ class Game
 
         CreateTestLevel(@scene);
 
+        RenderPrimitives::orientation_guide_setup();
+
         scene.Init();
     }
 
@@ -56,11 +58,13 @@ class Game
     {
         if(scene is null) return;
 
-        Render::SetBackfaceCull(true);
+        Render::SetBackfaceCull(false);
         scene.Render();
         // edit after this
 
         Render::ClearZ();
+
+        RenderPrimitives::orientation_guide.RenderMeshWithMaterial();
 
         //Vec2f start = Vec2f(6,6);
 

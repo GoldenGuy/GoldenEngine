@@ -39,7 +39,7 @@ class Scene
 		Render::SetZBuffer(true, true);
 		Render::SetAlphaBlend(false);
 		Render::SetBackfaceCull(true);
-		Render::SetAmbientLight(color_white);
+		//Render::SetAmbientLight(color_white);
 
 		float[] proj;
 		Matrix::MakePerspective(proj, dtr(75.0f), float(getScreenWidth())/float(getScreenHeight()), 0.01f, 400.0f);

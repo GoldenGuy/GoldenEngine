@@ -16,7 +16,7 @@ class PhysicsEngine
     PhysicsEngine(Scene@ _s)
     {
         @scene = @_s;
-        statics_spatial_hash = SpatialHash(1);
+        statics_spatial_hash = SpatialHash(2);
         //dynamics_spatial_hash = SpatialHash(4);
     }
 
@@ -102,7 +102,7 @@ class PhysicsEngine
             }
         }*/
 
-        //bounds = bounds + (bounds + comp.velocity); // account for movement
+        bounds = bounds + (bounds + comp.velocity); // account for movement
 
         // get the statics
         statics_spatial_hash.getIn(bounds, output);

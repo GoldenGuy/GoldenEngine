@@ -46,7 +46,8 @@ namespace GoldEngine
 			game.Render();
 
 			if(Menu::getMainMenu() is null)
-            	render_delta += getRenderApproximateCorrectionFactor();
+            	//render_delta += getRenderApproximateCorrectionFactor();
+				render_delta += getRenderExactDeltaTime() * getTicksASecond();
 		}
 	}
 
