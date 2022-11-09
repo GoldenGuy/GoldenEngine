@@ -331,109 +331,120 @@ void SphereTriangleCollision(CollisionData@ colPackage, Vec3f p1, Vec3f p2, Vec3
 
 			// Check against points:
 			a = velocitySquaredLength;
-
-			// P1
-			b = 2.0f * (velocity.Dot(base - p1));
-			c = (p1 - base).Dot(p1 - base) - 1.0f;
-			if (getLowestRoot(a, b , c, t, newT))
+            //if(a != 0)
             {
-				t = newT;
-				foundCollison = true;
-				collisionPoint = p1;
-			}
+                // P1
+                b = 2.0f * (velocity.Dot(base - p1));
+                c = (p1 - base).SquaredLength() - 1.0f;//(p1 - base).Dot(p1 - base) - 1.0f;
+                if (getLowestRoot(a, b , c, t, newT))
+                {
+                    t = newT;
+                    foundCollison = true;
+                    collisionPoint = p1;
+                }
 
-			// P2
-			b = 2.0f * (velocity.Dot(base - p2));
-			c = (p2 - base).Dot(p2 - base) - 1.0f;
-			if (getLowestRoot(a, b, c, t, newT))
-            {
-				t = newT;
-				foundCollison = true;
-				collisionPoint = p2;
-			}
+                // P2
+                b = 2.0f * (velocity.Dot(base - p2));
+                c = (p2 - base).SquaredLength() - 1.0f;//(p2 - base).Dot(p2 - base) - 1.0f;
+                if (getLowestRoot(a, b, c, t, newT))
+                {
+                    t = newT;
+                    foundCollison = true;
+                    collisionPoint = p2;
+                }
 
-			// P3
-			b = 2.0f * (velocity.Dot(base - p3));
-			c = (p3 - base).Dot(p3 - base) - 1.0f;
-			if (getLowestRoot(a, b, c, t, newT))
-            {
-				t = newT;
-				foundCollison = true;
-				collisionPoint = p3;
-			}
+                // P3
+                b = 2.0f * (velocity.Dot(base - p3));
+                c = (p3 - base).SquaredLength() - 1.0f;//(p3 - base).Dot(p3 - base) - 1.0f;
+                if (getLowestRoot(a, b, c, t, newT))
+                {
+                    t = newT;
+                    foundCollison = true;
+                    collisionPoint = p3;
+                }
+            }
 
 			// Check agains edges:
 
 			// p1 . p2:
-			Vec3f edge = p2-p1;
+			Vec3f edge = p2 - p1;
 			Vec3f baseToVertex = p1 - base;
-			float edgeSquaredLength = edge.Dot(edge);
+			float edgeSquaredLength = edge.SquaredLength();//edge.Dot(edge);
 			float edgeDotVelocity = edge.Dot(velocity);
 			float edgeDotBaseToVertex = edge.Dot(baseToVertex);
 
 			// Calculate parameters for equation
 			a = edgeSquaredLength * (-velocitySquaredLength) + edgeDotVelocity * edgeDotVelocity;
-			b = edgeSquaredLength * (2.0f * velocity.Dot(baseToVertex)) - 2.0f * edgeDotVelocity * edgeDotBaseToVertex;
-			c = edgeSquaredLength * (1.0f - baseToVertex.Dot(baseToVertex)) + edgeDotBaseToVertex * edgeDotBaseToVertex;
-
-			// Does the swept sphere collide against infinite edge?
-			if (getLowestRoot(a,b,c, t, newT))
+            //if(a != 0)
             {
-				// Check if intersection is within line segment:
-				float f = (edgeDotVelocity * newT - edgeDotBaseToVertex) / edgeSquaredLength;
-				if (f >= 0.0 && f <= 1.0)
+                b = edgeSquaredLength * (2.0f * velocity.Dot(baseToVertex)) - 2.0f * edgeDotVelocity * edgeDotBaseToVertex;
+                c = edgeSquaredLength * (1.0f - baseToVertex.SquaredLength()) + edgeDotBaseToVertex * edgeDotBaseToVertex;
+
+                // Does the swept sphere collide against infinite edge?
+                if (getLowestRoot(a, b, c, t, newT))
                 {
-					// intersection took place within segment.
-					t = newT;
-					foundCollison = true;
-					collisionPoint = p1 + edge * f;
-				}
-			}
+                    // Check if intersection is within line segment:
+                    float f = (edgeDotVelocity * newT - edgeDotBaseToVertex) / edgeSquaredLength;
+                    if (f >= 0.0f && f <= 1.0f)
+                    {
+                        // intersection took place within segment.
+                        t = newT;
+                        foundCollison = true;
+                        collisionPoint = p1 + edge * f;
+                    }
+                }
+            }
 
 			// p2 . p3:
 			edge = p3 - p2;
 			baseToVertex = p2 - base;
-			edgeSquaredLength = edge.Dot(edge);
+			edgeSquaredLength = edge.SquaredLength();//edge.Dot(edge);
 			edgeDotVelocity = edge.Dot(velocity);
 			edgeDotBaseToVertex = edge.Dot(baseToVertex);
 
 			a = edgeSquaredLength * (-velocitySquaredLength) + edgeDotVelocity * edgeDotVelocity;
-			b = edgeSquaredLength * (2.0f * velocity.Dot(baseToVertex)) - 2.0f * edgeDotVelocity * edgeDotBaseToVertex;
-			c = edgeSquaredLength * (1.0f - baseToVertex.Dot(baseToVertex)) + edgeDotBaseToVertex * edgeDotBaseToVertex;
-
-			if (getLowestRoot(a, b, c, t, newT))
+            //if(a != 0)
             {
-				float f = (edgeDotVelocity * newT - edgeDotBaseToVertex) / edgeSquaredLength;
-				if (f >= 0.0f && f <= 1.0f)
+                b = edgeSquaredLength * (2.0f * velocity.Dot(baseToVertex)) - 2.0f * edgeDotVelocity * edgeDotBaseToVertex;
+                c = edgeSquaredLength * (1.0f - baseToVertex.SquaredLength()) + edgeDotBaseToVertex * edgeDotBaseToVertex;
+
+                if (getLowestRoot(a, b, c, t, newT))
                 {
-					t = newT;
-					foundCollison = true;
-					collisionPoint = p2 + edge * f;
-				}
-			}
+                    float f = (edgeDotVelocity * newT - edgeDotBaseToVertex) / edgeSquaredLength;
+                    if (f >= 0.0f && f <= 1.0f)
+                    {
+                        t = newT;
+                        foundCollison = true;
+                        collisionPoint = p2 + edge * f;
+                    }
+                }
+            }
 
 			// p3 . p1:
 			edge = p1 - p3;
 			baseToVertex = p3 - base;
-			edgeSquaredLength = edge.Dot(edge);
+			edgeSquaredLength = edge.SquaredLength();//edge.Dot(edge);
 			edgeDotVelocity = edge.Dot(velocity);
 
 			edgeDotBaseToVertex = edge.Dot(baseToVertex);
 
 			a = edgeSquaredLength * (-velocitySquaredLength) + edgeDotVelocity * edgeDotVelocity;
-			b = edgeSquaredLength * (2.0f * velocity.Dot(baseToVertex)) - 2.0f * edgeDotVelocity * edgeDotBaseToVertex;
-			c = edgeSquaredLength * (1.0f - baseToVertex.Dot(baseToVertex)) + edgeDotBaseToVertex * edgeDotBaseToVertex;
-
-			if (getLowestRoot(a, b, c, t, newT))
+            //if(a != 0)
             {
-				float f = (edgeDotVelocity * newT - edgeDotBaseToVertex) / edgeSquaredLength;
-				if (f >= 0.0f && f <= 1.0f)
+                b = edgeSquaredLength * (2.0f * velocity.Dot(baseToVertex)) - 2.0f * edgeDotVelocity * edgeDotBaseToVertex;
+                c = edgeSquaredLength * (1.0f - baseToVertex.SquaredLength()) + edgeDotBaseToVertex * edgeDotBaseToVertex;
+
+                if (getLowestRoot(a, b, c, t, newT))
                 {
-					t = newT;
-					foundCollison = true;
-					collisionPoint = p3 + edge * f;
-				}
-			}
+                    float f = (edgeDotVelocity * newT - edgeDotBaseToVertex) / edgeSquaredLength;
+                    if (f >= 0.0f && f <= 1.0f)
+                    {
+                        t = newT;
+                        foundCollison = true;
+                        collisionPoint = p3 + edge * f;
+                    }
+                }
+            }
 		}
 		// Set result:
 		if (foundCollison)

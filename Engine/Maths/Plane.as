@@ -25,7 +25,7 @@ class Plane
     {
         normal = (p1 - p0).Cross(p2 - p0);
         normal.Normalize();
-        origin = p1;
+        origin = p0;
         plane_constant = -(normal.Dot(origin));
     }
 

@@ -75,9 +75,41 @@ namespace Matrix
 	}
 }
 
-bool checkPointInTriangle(Vec3f point, Vec3f p1, Vec3f p2, Vec3f p3)
+bool checkPointInTriangle(Vec3f p, Vec3f a, Vec3f b, Vec3f c)
 {
-	Vec3f u, v, w, vw, vu, uw, uv;
+	a -= p;
+	b -= p;
+	c -= p;
+
+	// The point should be moved too, so they are both
+	// relative, but because we don't use p in the
+	// equation anymore, we don't need it!
+	// p -= p;
+
+	// Compute the normal vectors for triangles:
+	// u = normal of PBC
+	// v = normal of PCA
+	// w = normal of PAB
+
+	Vec3f u = b.Cross(c);
+	Vec3f v = c.Cross(a);
+	Vec3f w = a.Cross(b);
+
+	// Test to see if the normals are facing 
+	// the same direction, return false if not
+	if (u.Dot(v) < 0.0f)
+	{
+		return false;
+	}
+	if (u.Dot(w) < 0.0f)
+	{
+		return false;
+	}
+
+	// All normals facing the same way, return true
+	return true;
+	
+	/*Vec3f u, v, w, vw, vu, uw, uv;
 
 	u = p2 - p1;
 	v = p3 - p1;
@@ -103,11 +135,16 @@ bool checkPointInTriangle(Vec3f point, Vec3f p1, Vec3f p2, Vec3f p3)
 	float r = vw.Length() / d;
 	float t = uw.Length() / d;
 
-	return ((r + t) <= 1.0f);
+	return ((r + t) <= 1.0f);*/
 }
 
 bool getLowestRoot(float a, float b, float c, float maxR, float&out root)
 {
+	if(a == 0)
+	{
+		root = (-c)/b;
+	}
+	
 	// Check if a solution exists
 	float determinant = (b * b) - (4.0f * a * c);
 
@@ -119,7 +156,7 @@ bool getLowestRoot(float a, float b, float c, float maxR, float&out root)
 	float sqrtD = Maths::Sqrt(determinant);
 
 	// fix divide by null
-	if(a == 0) a = 0.00001f;
+	//if(a == 0) a = 0.0000001f;
 
 	float r1 = (-b - sqrtD) / (2.0f * a);
 	float r2 = (-b + sqrtD) / (2.0f * a);

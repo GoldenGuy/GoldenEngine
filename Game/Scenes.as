@@ -26,7 +26,7 @@ void CreateTestLevel(Scene@ scene)
         Entity@ ent = scene.CreateEntity("player camera");
         ent.AddComponent(FPSCameraController());
         //ent.AddComponent(FreeFlyMovement());
-        ent.AddComponent(PlayerPhysicsComponent(SphereBody(1)));
+        ent.AddComponent(PlayerPhysicsComponent(SphereBody(1.0)));
         ent.SetPositionImmediate(Vec3f(0, 10, 0));
     }
 }
