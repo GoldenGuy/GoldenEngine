@@ -11,20 +11,15 @@ class PhysicsEngine
     Scene@ scene;
     PhysicsComponent@[] physics_components;
     SpatialHash statics_spatial_hash;
-    //SpatialHash dynamics_spatial_hash;
 
     PhysicsEngine(Scene@ _s)
     {
         @scene = @_s;
         statics_spatial_hash = SpatialHash(2);
-        //dynamics_spatial_hash = SpatialHash(4);
     }
 
     void Physics()
     {
-        //dynamics_spatial_hash.Clear();
-        //dynamics_spatial_hash = SpatialHash(4);
-
         uint[] dynamics;
 
         for(uint i = 0; i < physics_components.size(); i++)
@@ -33,11 +28,11 @@ class PhysicsEngine
             {
                 physics_components.removeAt(i);
                 i--;
+                continue;
             }
             
-            else if (physics_components[i].type == PhysicsComponentType::DYNAMIC)
+            if (physics_components[i].type == PhysicsComponentType::DYNAMIC)
             {
-                //dynamics_spatial_hash.Add(@physics_components[i]);
                 dynamics.push_back(i);
             }
 		}
@@ -62,71 +57,15 @@ class PhysicsEngine
         }
     }
 
-    ComponentBodyPair@[]@ getNearbyColliders(PhysicsComponent@ comp) // only for dynamics!
+    ComponentBodyPair@[]@ getNearbyColliders(PhysicsComponent@ comp) // only for dynamics! (obvious)
     {
         ComponentBodyPair@[] output;
         AABB bounds = comp.getBounds();
-
-        /*int x_start = Maths::Floor(bounds.min.x/statics_spatial_hash.GRID_SIZE);
-        int y_start = Maths::Floor(bounds.min.y/statics_spatial_hash.GRID_SIZE);
-        int z_start = Maths::Floor(bounds.min.z/statics_spatial_hash.GRID_SIZE);
-        int x_end = Maths::Ceil(bounds.max.x/statics_spatial_hash.GRID_SIZE);
-        int y_end = Maths::Ceil(bounds.max.y/statics_spatial_hash.GRID_SIZE);
-        int z_end = Maths::Ceil(bounds.max.z/statics_spatial_hash.GRID_SIZE);
-
-        dictionary copy_buffer;
-        for(int x = x_start; x < x_end; x++)
-        {
-            for(int y = y_start; y < y_end; y++)
-            {
-                for(int z = z_start; z < z_end; z++)
-                {
-                    string hash = statics_spatial_hash.getHash(x, y, z);
-                    if(statics_spatial_hash.hash_map.exists(hash))
-                    {
-                        ComponentBodyPair@[] bucket;
-                        statics_spatial_hash.hash_map.get(hash, bucket);
-
-                        for(int j = 0; j < bucket.size(); j++)
-                        {
-                            ComponentBodyPair@ pair = @bucket[j];
-                            string _hash = pair.comp.phy_id+"_"+pair.body.bod_id;
-                            if(!copy_buffer.exists(_hash) && comp.phy_id != pair.comp.phy_id)
-                            {
-                                output.push_back(pair);
-                                copy_buffer.set(_hash, true);
-                            }
-                        }
-                    }
-                }
-            }
-        }*/
-
-        bounds = bounds + (bounds + comp.velocity); // account for movement
+        bounds = bounds + (bounds + comp.velocity*2); // account for movement
 
         // get the statics
         statics_spatial_hash.getIn(bounds, output);
 
-        // now get the dynamics
-        //dynamics_spatial_hash.getIn(bounds, output);
-        /*for(int i = 0; i < comp.buckets_occupied.size(); i++)
-        {
-            ComponentBodyPair@[]@ pair_array = @comp.buckets_occupied[i];
-            if(pair_array.size() > 0)
-            {
-                for(int j = 0; j < pair_array.size(); j++)
-                {
-                    ComponentBodyPair@ temp = @pair_array[j];
-                    if(temp.comp.phy_id == comp.phy_id)
-                        continue;
-                    string hash = temp.comp.phy_id+"_"+temp.body.bod_id;
-                    if(!copy_buffer.exists(hash))
-                    {
-                        output.push_back(@temp);
-                    }
-                }
-            }
-        }*/
         return @output;
     }
 
@@ -138,39 +77,151 @@ class PhysicsEngine
             {
                 SphereBody@ sphere = cast<SphereBody>(first);
 
-                data.start_pos /= sphere.radius;
-                data.vel /= sphere.radius;
-                
                 switch(second.type)
                 {
-                    case BodyType::TRIANGLE:
+                    case BodyType::AABB:
                     {
-                        TriangleBody@ triangle = cast<TriangleBody>(second);
-                        Vec3f a = triangle.a / sphere.radius;
-                        Vec3f b = triangle.b / sphere.radius;
-                        Vec3f c = triangle.c / sphere.radius;
+                        BoxBody@ box = cast<BoxBody>(second);
+                        AABB bounds = box.body_bounds;
 
-                        SphereTriangleCollision(@data, a, b, c);
-                        if(data.intersect)
+                        Vec3f nearest_point;
+                        nearest_point.x = Maths::Max(bounds.min.x, Maths::Min(data.final_pos.x, bounds.max.x));
+                        nearest_point.y = Maths::Max(bounds.min.y, Maths::Min(data.final_pos.y, bounds.max.y));
+                        nearest_point.z = Maths::Max(bounds.min.z, Maths::Min(data.final_pos.z, bounds.max.z));
+
+                        Vec3f ray_to_nearest = nearest_point - data.final_pos;
+                        float ray_len = ray_to_nearest.Length();
+
+                        if(ray_len > 0)
                         {
-                            data.intersect_point *= sphere.radius;
+                            float overlap = sphere.radius - ray_len;
+
+                            if(overlap > 0)
+                            {
+                                Vec3f surf_normal = ray_to_nearest / ray_len; // basically .Normal()
+                                data.final_pos -= surf_normal * overlap;
+                                data.distance_to_collision = overlap;
+                                data.surface_normal = (surf_normal * (-1.0f)).Normal();
+
+                                return true;
+                            }
                         }
+                        return false;
                     }
                     break;
 
-                    case BodyType::SPHERE:
+                    case BodyType::OBB:
                     {
-                        SphereBody@ other_sphere = cast<SphereBody>(second);
+                        OBBBody@ box = cast<OBBBody>(second);
+                        AABB bounds = box.body_bounds * box.transform.scale;
 
-                        sphIntersect(@data, other_sphere.radius + sphere.radius);
-                        if(data.intersect)
+                        Vec3f _final_pos = box.transform.rotation.Inverse() * data.final_pos;
+
+                        Vec3f nearest_point;
+                        nearest_point.x = Maths::Max(bounds.min.x, Maths::Min(_final_pos.x, bounds.max.x));
+                        nearest_point.y = Maths::Max(bounds.min.y, Maths::Min(_final_pos.y, bounds.max.y));
+                        nearest_point.z = Maths::Max(bounds.min.z, Maths::Min(_final_pos.z, bounds.max.z));
+
+                        Vec3f ray_to_nearest = nearest_point - _final_pos;
+                        float ray_len = ray_to_nearest.Length();
+
+                        if(ray_len > 0)
                         {
-                            data.intersect_point *= sphere.radius;
+                            float overlap = sphere.radius - ray_len;
+
+                            if(overlap > 0)
+                            {
+                                Vec3f surf_normal = ray_to_nearest / ray_len; // basically .Normal()
+                                _final_pos -= surf_normal * overlap;
+                                data.final_pos = box.transform.rotation * _final_pos;
+                                data.distance_to_collision = overlap;
+                                data.surface_normal = (box.transform.rotation * surf_normal * (-1.0f)).Normal();
+
+                                return true;
+                            }
                         }
+                        return false;
                     }
                     break;
                 }
             }
+            break;
+
+            /*case BodyType::ELLIPSOID:
+            {
+                EllipsoidBody@ ellips = cast<EllipsoidBody>(first);
+                Vec3f _final_pos = data.final_pos / ellips.radius;
+
+                switch(second.type)
+                {
+                    case BodyType::AABB:
+                    {
+                        BoxBody@ box = cast<BoxBody>(second);
+                        AABB bounds = box.body_bounds / ellips.radius;
+
+                        Vec3f nearest_point;
+                        nearest_point.x = Maths::Max(bounds.min.x, Maths::Min(_final_pos.x, bounds.max.x));
+                        nearest_point.y = Maths::Max(bounds.min.y, Maths::Min(_final_pos.y, bounds.max.y));
+                        nearest_point.z = Maths::Max(bounds.min.z, Maths::Min(_final_pos.z, bounds.max.z));
+
+                        Vec3f ray_to_nearest = nearest_point - _final_pos;
+                        float ray_len = ray_to_nearest.Length();
+
+                        if(ray_len > 0)
+                        {
+                            float overlap = 1.0f - ray_len;
+
+                            if(overlap > 0)
+                            {
+                                Vec3f surf_normal = ray_to_nearest / ray_len; // basically .Normal()
+                                _final_pos -= surf_normal * overlap;
+
+                                data.final_pos = _final_pos * ellips.radius;
+                                data.surface_normal = surf_normal * (-1.0f) * ellips.radius;
+
+                                return true;
+                            }
+                        }
+                        return false;
+                    }
+                    break;
+
+                    case BodyType::OBB:
+                    {
+                        OBBBody@ box = cast<OBBBody>(second);
+                        AABB bounds = box.body_bounds * box.transform.scale / ellips.radius;
+
+                        _final_pos = box.transform.rotation.Inverse() * data.final_pos;
+
+                        Vec3f nearest_point;
+                        nearest_point.x = Maths::Max(bounds.min.x, Maths::Min(_final_pos.x, bounds.max.x));
+                        nearest_point.y = Maths::Max(bounds.min.y, Maths::Min(_final_pos.y, bounds.max.y));
+                        nearest_point.z = Maths::Max(bounds.min.z, Maths::Min(_final_pos.z, bounds.max.z));
+
+                        Vec3f ray_to_nearest = nearest_point - _final_pos;
+                        float ray_len = ray_to_nearest.Length();
+
+                        if(ray_len > 0)
+                        {
+                            float overlap = 1.0f - ray_len;
+
+                            if(overlap > 0)
+                            {
+                                Vec3f surf_normal = ray_to_nearest / ray_len; // basically .Normal()
+                                _final_pos -= surf_normal * overlap;
+
+                                data.final_pos = box.transform.rotation * _final_pos * ellips.radius;
+                                data.surface_normal = box.transform.rotation * surf_normal * (-1.0f);// * ellips.radius;
+
+                                return true;
+                            }
+                        }
+                        return false;
+                    }
+                    break;
+                }
+            }
+            break;*/
         }
 
         return data.intersect;

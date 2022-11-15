@@ -33,7 +33,7 @@ class Game
                 Entity@ ent = scene.CreateEntity("ball");
                 //ent.AddComponent(ObjRendererComponent("improved_fumo.obj"));
                 ent.AddComponent(MeshRendererComponent(RenderPrimitives::sphere));
-                ent.AddComponent(DynamicBodyComponent(SphereBody(1.0f)));
+                //ent.AddComponent(DynamicBodyComponent(SphereBody(1.0f)));
                 float x = (float(i % 5) - 2.5f) * 2.5f;
                 float z = (float(int(i / 5)) - 2.5f) * 2.5f;
                 ent.SetPositionImmediate(Vec3f(x, 10, z));
@@ -62,13 +62,13 @@ class Game
         scene.Render();
         // edit after this
 
-        Render::ClearZ();
+        /*Render::ClearZ();
 
         float[] model;
 		Matrix::MakeIdentity(model);
         Render::SetModelTransform(model);
 
-        RenderPrimitives::orientation_guide.RenderMeshWithMaterial();
+        RenderPrimitives::orientation_guide.RenderMeshWithMaterial();*/
 
         //Vec2f start = Vec2f(6,6);
 

@@ -133,6 +133,25 @@ class Vec3f
 		return Vec3f(x * length, y * length, z * length);
 	}
 
+	Vec3f getSphericalCoordinateAngles()
+	{
+		Vec3f angle = Vec3f_ZERO;
+		float length = this.Length();
+
+		if (length > 0)
+		{
+			if (x != 0)
+			{
+				angle.y = rtd(Maths::ATan2(z, x));
+			}
+			else if (z < 0)
+				angle.y = 180;
+
+			angle.x = float(rtd(Maths::ACos(Maths::Min(y * length, 1.0f))));
+		}
+		return angle;
+	}
+
 	int Angle(const Vec3f&in vec)
 	{
 		float rads = Maths::ACos(this.Dot(vec) / (this.Length() * vec.Length()));

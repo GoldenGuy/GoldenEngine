@@ -75,121 +75,46 @@ namespace Matrix
 	}
 }
 
-bool checkPointInTriangle(Vec3f point, Vec3f p1, Vec3f p2, Vec3f p3)
+Vec3f ClosestPtPointAABB(Vec3f p, AABB b)
 {
-	Vec3f u, v, w, vw, vu, uw, uv;
+	Vec3f q;
+	float v;
 
-	u = p2 - p1;
-	v = p3 - p1;
-	w = point - p1;
+	v = p.x;
+	if (v < b.min.x) v = b.min.x;
+	else if (v > b.max.x) v = b.max.x;
+	q.x = v;
 
-	vw = v.Cross(w);
-	vu = v.Cross(u);
+	v = p.y;
+	if (v < b.min.y) v = b.min.y;
+	else if (v > b.max.y) v = b.max.y;
+	q.y = v;
 
-	if (vw.Dot(vu) < 0.0f)
-	{
-		return false;
-	}
+	v = p.z;
+	if (v < b.min.z) v = b.min.z;
+	else if (v > b.max.z) v = b.max.z;
+	q.z = v;
 
-	uw = u.Cross(w);
-	uv = u.Cross(v);
-
-	if (uw.Dot(uv) < 0.0f)
-	{
-		return false;
-	}
-
-	float d = uv.Length();
-	float r = vw.Length() / d;
-	float t = uw.Length() / d;
-
-	return ((r + t) <= 1.0f);
+	return q;
 }
 
-bool getLowestRoot(float a, float b, float c, float maxR, float&out root)
+float SqDistPointAABB(Vec3f p, AABB b)
 {
-	// Check if a solution exists
-	float determinant = (b * b) - (4.0f * a * c);
+	float sqDist = 0.0f;
+	float v;
+	// For each axis count any excess distance outside box extents
 
-	// If determinant is negative it means no solutions.
-	if (determinant < 0.0f) return false;
+	v = p.x;
+	if (v < b.min.x) sqDist += (v - b.min.x) * (v - b.min.x);
+	else if (v > b.max.x) sqDist += (v - b.max.x) * (v - b.max.x);
 
-	// calculate the two roots: (if determinant == 0 then
-	// x1==x2 but let’s disregard that slight optimization)
-	float sqrtD = Maths::Sqrt(determinant);
+	v = p.y;
+	if (v < b.min.y) sqDist += (v - b.min.y) * (v - b.min.y);
+	else if (v > b.max.y) sqDist += (v - b.max.y) * (v - b.max.y);
 
-	// fix divide by null
-	if(a == 0) a = 0.00001f;
+	v = p.z;
+	if (v < b.min.z) sqDist += (v - b.min.z) * (v - b.min.z);
+	else if (v > b.max.z) sqDist += (v - b.max.z) * (v - b.max.z);
 
-	float r1 = (-b - sqrtD) / (2.0f * a);
-	float r2 = (-b + sqrtD) / (2.0f * a);
-
-	// Sort so x1 <= x2
-	if (r1 > r2)
-	{
-		float temp = r2;
-		r2 = r1;
-		r1 = temp;
-	}
-	// Get lowest root:
-	if (r1 > 0 && r1 < maxR)
-	{
-		root = r1;
-		return true;
-	}
-	// It is possible that we want x2 - this can happen
-	// if x1 < 0
-	if (r2 > 0 && r2 < maxR)
-	{
-		root = r2;
-		return true;
-	}
-	// No (valid) solutions
-	return false;
+	return sqDist;
 }
-
-/*float get_lowest_root(float a, float b, float c, float max)
-{
-	float determinant = b*b - 4.0*a*c;
-
-    // if negative there is no solution
-    if (determinant < 0.0) {
-        return -1.0f;
-    }
-
-    // calculate two roots
-    float sqrtD = Maths::Sqrt(determinant);
-    float r1 = (-b - sqrtD) / (2.0f*a);
-    float r2 = (-b + sqrtD) / (2.0f*a);
-
-    // set x1 <= x2
-    if (r1 > r2) {
-        float temp = r2;
-        r2 = r1;
-        r1 = temp;
-    }
-
-    // get lowest root
-    if (r1 > 0.0f && r1 < max) {
-        return r1;
-    }
-
-    if (r2 > 0.0f && r2 < max) {
-        return r2;
-    }
-
-    // no solutions
-    return -1.0f;
-}
-
-class Triangle
-{
-	Vec3f a, b, c;
-
-	Triangle(Vec3f _a, Vec3f _b, Vec3f _c)
-	{
-		a = _a;
-		b = _b;
-		c = _c;
-	}
-}*/
