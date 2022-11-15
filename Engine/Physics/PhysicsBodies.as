@@ -1,12 +1,14 @@
 
+const float aabb_margin = 0.4f;
+
 enum BodyType
 {
     NONE,
     POINT,
     PLANE,
-    TRIANGLE,
-    MESH, // should never be dynamic, sorry
-    POLYGON,
+    //TRIANGLE,
+    //MESH, // should never be dynamic, sorry
+    //POLYGON,
     SPHERE,
     ELLIPSOID,
     AABB,
@@ -34,7 +36,7 @@ class SphereBody : PhysicsBody
     {
         radius = _radius;
         type = BodyType::SPHERE;
-        bounds = AABB(Vec3f(-radius), Vec3f(radius));
+        bounds = AABB(Vec3f(-radius-aabb_margin), Vec3f(radius+aabb_margin));
     }
 }
 
@@ -46,67 +48,45 @@ class EllipsoidBody : PhysicsBody
     {
         radius = _radius;
         type = BodyType::ELLIPSOID;
-        bounds = AABB(-radius, radius);
+        bounds = AABB(-radius-aabb_margin, radius+aabb_margin);
     }
 }
 
-class TriangleBody : PhysicsBody
+class BoxBody : PhysicsBody
 {
-    Vec3f a;
-    Vec3f b;
-    Vec3f c;
+    AABB body_bounds;
 
-    TriangleBody(Vec3f _a, Vec3f _b, Vec3f _c)
+    BoxBody(AABB _body)
     {
-        a = _a;
-        b = _b;
-        c = _c;
-        type = BodyType::TRIANGLE;
-
-        float x_min = Maths::Min(Maths::Min(a.x, b.x), c.x);
-        float y_min = Maths::Min(Maths::Min(a.y, b.y), c.y);
-        float z_min = Maths::Min(Maths::Min(a.z, b.z), c.z);
-
-        float x_max = Maths::Max(Maths::Max(a.x, b.x), c.x);
-        float y_max = Maths::Max(Maths::Max(a.y, b.y), c.y);
-        float z_max = Maths::Max(Maths::Max(a.z, b.z), c.z);
-
-        bounds = AABB(Vec3f(x_min, y_min, z_min)-Vec3f(0.1f), Vec3f(x_max, y_max, z_max)+Vec3f(0.1f));
+        body_bounds = _body;
+        type = BodyType::AABB;
+        bounds = AABB(body_bounds.min - aabb_margin, body_bounds.max + aabb_margin);
     }
 }
 
-class MeshBody : PhysicsBody
+class OBBBody : PhysicsBody
 {
-    TriangleBody[] tris;
+    AABB body_bounds;
+    Transform transform;
 
-    MeshBody(Vertex[] _tris)
+    OBBBody(AABB _body, Transform _transform)
     {
-        type = BodyType::MESH;
-        int size = _tris.size();
+        body_bounds = _body;
+        transform = _transform;
+        type = BodyType::OBB;
 
-        float x_min = 0;
-        float y_min = 0;
-        float z_min = 0;
+        //bounds = AABB(body_bounds.min - aabb_margin, body_bounds.max + aabb_margin);
+        Vec3f _min = (transform.rotation * (body_bounds.min * transform.scale));
+        Vec3f _max = (transform.rotation * (body_bounds.max * transform.scale));
 
-        float x_max = 0;
-        float y_max = 0;
-        float z_max = 0;
+        float x_min = Maths::Min(_max.x, _min.x);
+        float y_min = Maths::Min(_max.y, _min.y);
+        float z_min = Maths::Min(_max.z, _min.z);
 
-        for(int i = 0; i < size; i += 3)
-        {
-            Vertex vert_a = _tris[i];
-            Vertex vert_b = _tris[i+1];
-            Vertex vert_c = _tris[i+2];
-            tris.push_back(TriangleBody(Vec3f(vert_a.x, vert_a.y, vert_a.z), Vec3f(vert_b.x, vert_b.y, vert_b.z), Vec3f(vert_c.x, vert_c.y, vert_c.z)));
-
-            x_min = Maths::Min(Maths::Min(Maths::Min(vert_a.x, vert_b.x), vert_c.x), x_min);
-            y_min = Maths::Min(Maths::Min(Maths::Min(vert_a.y, vert_b.y), vert_c.y), y_min);
-            z_min = Maths::Min(Maths::Min(Maths::Min(vert_a.z, vert_b.z), vert_c.z), z_min);
-            x_max = Maths::Max(Maths::Max(Maths::Max(vert_a.x, vert_b.x), vert_c.x), x_max);
-            y_max = Maths::Max(Maths::Max(Maths::Max(vert_a.y, vert_b.y), vert_c.y), y_max);
-            z_max = Maths::Max(Maths::Max(Maths::Max(vert_a.z, vert_b.z), vert_c.z), z_max);
-        }
-
-        bounds = AABB(Vec3f(x_min, y_min, z_min), Vec3f(x_max, y_max, z_max));
+        float x_max = Maths::Max(_min.x, _max.x);
+        float y_max = Maths::Max(_min.y, _max.y);
+        float z_max = Maths::Max(_min.z, _max.z);
+        
+        bounds = AABB(Vec3f(x_min, y_min, z_min) - aabb_margin, Vec3f(x_max, y_max, z_max) + aabb_margin);
     }
 }

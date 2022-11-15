@@ -1,4 +1,6 @@
 
+int precission_steps = 8;
+
 class PlayerPhysicsComponent : PhysicsComponent
 {
     PhysicsEngine@ physics;
@@ -8,6 +10,7 @@ class PlayerPhysicsComponent : PhysicsComponent
 		super(PhysicsComponentType::DYNAMIC, _body);
 		name = "PlayerPhysicsComponent";
         hooks |= CompHooks::TICK;
+		//hooks |= CompHooks::RENDER;
 	}
 
 	void Init()
@@ -17,210 +20,128 @@ class PlayerPhysicsComponent : PhysicsComponent
 
 	void Physics(ResponseResult&out result)
 	{
-		/*const float very_close_dist = 0.005f;
-
 		Vec3f pos = entity.transform.position;
 		Vec3f vel = velocity;
-		vel += gravity_force;
-		//vel.Print();
-		Vec3f orig_vel = vel;
+
+		if(vel.Length() < 0.001f)
+		{
+			result.needed = false;
+			return;
+		}
+
+		grounded = false;
+		sloped = false;
 
 		ComponentBodyPair@[]@ colliders = @entity.scene.physics.getNearbyColliders(@this);
 		int colliders_size = colliders.size();
 
-		int collision_depth = 0;
-
-		Vec3f final_pos;
-
-		while(true)
+		CollisionData data = CollisionData(pos, vel);
+		SphereBody@ our_sphere = cast<SphereBody>(body);
+		for(int j = 0; j < precission_steps; j++)
+		for(int j = 0; j < colliders_size; j++)
 		{
-			if(collision_depth > 5)
+			Vec3f other_pos = colliders[j].comp.entity.transform.position;
+			data.final_pos -= other_pos;
+			if(physics.Collide(@body, @colliders[j].body, @data))
 			{
-				final_pos = pos;
-				break;
-			}
-			//print("step ["+collision_depth+"]");
-
-			CollisionData data = CollisionData(pos, vel);
-			for(int j = 0; j < colliders_size; j++)
-			{
-				CollisionData _data = data;
-				PhysicsComponent@ comp = @colliders[j].comp;
-				if(comp.type == PhysicsComponentType::DYNAMIC)
-					_data.vel -= comp.velocity;
-				
-				_data.start_pos -= comp.entity.transform.position;
-
-				if(physics.Collide(@body, @colliders[j].body, @_data))
+				float normal_dot = Maths::Min(1.0f, data.surface_normal.Dot(Vec3f_UP));
+				//print("normal_dot: "+normal_dot); // 1 is up, 0 is a 90 degree wall, below 0 is ceilings
+				if(normal_dot > 0.5f)
 				{
-					if(_data.t < data.t)
+					if(normal_dot > 0.8f)
 					{
-						data.intersect = true;
-						data.intersect_point = _data.intersect_point;
-						data.t = _data.t;
+						grounded = true;
+						ground_normal = data.surface_normal;
 					}
+					if(normal_dot < 0.9f)
+						sloped = true;
 				}
 			}
-
-			if(!data.intersect) // no collision
-			{
-				final_pos = pos + vel;
-				break;
-			}
-
-			Vec3f dest = pos + vel;
-			Vec3f new_base = pos;
-
-			float dist_to_coll = vel.Length() * data.t;
-			if(dist_to_coll > very_close_dist)
-			{
-				Vec3f vel_normal = vel.Normal();
-				//Vec3f v = vel.Normal();
-				//v *= (dist_to_coll - very_close_dist);
-				//new_base += v;
-				new_base += vel_normal * (dist_to_coll - very_close_dist);
-
-				//data.intersect_point -= vel_normal * 0.1f;
-			}
-
-			Plane plane = data.slidingPlane();
-
-			Vec3f new_dest = dest - plane.normal * (plane.signedDistanceTo(dest) + very_close_dist);
-
-			Vec3f new_vel = new_dest - data.intersect_point;
-			//new_vel.Print();
-			//print("new_vel.Length(): "+new_vel.Length());
-
-			if(new_vel.Length() < very_close_dist)
-			{
-				final_pos = new_base;
-				vel = new_vel;//Vec3f(0, -1, 0);
-				//print("breaks here");
-				break;
-			}
-
-			pos = new_base;
-			vel = new_vel;
-			collision_depth++;
+			data.final_pos += other_pos;
 		}
 
 		result.needed = true;
-		result.new_position = final_pos;
-		result.new_velocity = vel.Normal() * orig_vel.Length();
-		result.new_velocity.x *= 0.8f;
-		result.new_velocity.z *= 0.8f;*/
-		
-		const float very_close_dist = 0.005f;
-
-		Vec3f pos = entity.transform.position;
-		Vec3f vel = velocity;
-		vel += gravity_force;
-		float orig_vel_len = vel.Length();
-
-		Vec3f final_pos;
-
-		ComponentBodyPair@[]@ colliders = @entity.scene.physics.getNearbyColliders(@this);
-		int colliders_size = colliders.size();
-
-		Vec3f dest = pos + vel;
-		Plane first_plane;
-		for (int i = 0; i < 3; i++)
-		{
-			float vel_len = vel.Length();
-			if(vel_len < very_close_dist)
-			{
-				break;
-			}
-			CollisionData data = CollisionData(pos, vel);
-
-			for(int j = 0; j < colliders_size; j++)
-			{
-				CollisionData _data = data;
-				PhysicsComponent@ comp = @colliders[j].comp;
-				if(comp.type == PhysicsComponentType::DYNAMIC)
-					_data.vel -= comp.velocity;
-				
-				_data.start_pos -= comp.entity.transform.position;
-
-				if(physics.Collide(@body, @colliders[j].body, @_data))
-				{
-					if(_data.t <= data.t)
-					{
-						data.intersect = true;
-						data.intersect_point = _data.intersect_point;
-						data.t = _data.t;
-					}
-				}
-			}
-
-			if(!data.intersect) // no collision
-			{
-				pos = dest;
-				break;
-			}
-
-			float dist = vel_len * data.t;
-			float short_dist = Maths::Max(dist - very_close_dist, 0.0f);
-			pos += vel.Normal() * short_dist;
-			if (i == 0)
-			{
-				Vec3f touch_point = pos;//data.start_pos + (vel * data.t);
-                float long_radius = (touch_point - data.intersect_point).Length() + very_close_dist;
-				//print("long_radius "+long_radius);
-				data.intersect_point.Print();
-				first_plane = data.slidingPlane();
-				dest -= first_plane.normal * (first_plane.signedDistanceTo(dest) - long_radius);
-				vel = dest - pos;
-			}
-			else if (i == 1)
-			{
-				Plane second_plane = data.slidingPlane();
-				Vec3f crease = first_plane.normal.Cross(second_plane.normal).Normal();
-				float dis = (dest - pos).Dot(crease);
-				vel = crease * dis;
-				dest = pos + vel;
-			}
-		}
-		final_pos = pos;
-		vel.x *= 0.8f;
-		vel.z *= 0.8f;
-
-		result.needed = true;
-		result.new_position = final_pos;
-		result.new_velocity = vel;//.Normal() * orig_vel_len;
-		//result.new_velocity.x *= 0.8f;
-		//result.new_velocity.z *= 0.8f;
+		result.new_position = data.final_pos;
+		result.new_velocity = data.final_pos - pos;
 	}
+
+	bool grounded = false;
+	Vec3f ground_normal = Vec3f_ZERO;
+	bool sloped = false;
 
     void Tick()
     {
-        Vec3f forward = Vec3f(0,0,1);
-		Vec3f right = Vec3f(1,0,0);
-        forward = entity.scene.camera.angle * forward;
-		forward.y = 0;
-		forward.Normalize();
-		right = entity.scene.camera.angle * right;
-		right.y = 0;
-		right.Normalize();
-        if(getControls().isKeyPressed(KEY_KEY_W))
-        {
-            velocity += forward*0.05f;
-        }
-        if(getControls().isKeyPressed(KEY_KEY_S))
-        {
-            velocity -= forward*0.05f;
-        }
-		if(getControls().isKeyPressed(KEY_KEY_D))
-        {
-            velocity += right*0.05f;
-        }
-        if(getControls().isKeyPressed(KEY_KEY_A))
-        {
-            velocity -= right*0.05f;
-        }
-		if(getControls().isKeyJustPressed(KEY_SPACE))
+        if(grounded)
 		{
-			velocity.y = 0.12f;
+			Vec3f forward = entity.scene.camera.angle * Vec3f(0,0,1);
+			forward.y = 0;
+			forward.Normalize();
+			Vec3f right = entity.scene.camera.angle * Vec3f(1,0,0);
+			right.y = 0;
+			right.Normalize();
+
+			Vec3f move_acceleration = Vec3f_ZERO;
+
+			if(getControls().isKeyPressed(KEY_KEY_W))
+			{
+				move_acceleration += forward;
+			}
+			if(getControls().isKeyPressed(KEY_KEY_S))
+			{
+				move_acceleration -= forward;
+			}
+			if(getControls().isKeyPressed(KEY_KEY_D))
+			{
+				move_acceleration += right;
+			}
+			if(getControls().isKeyPressed(KEY_KEY_A))
+			{
+				move_acceleration -= right;
+			}
+
+			move_acceleration *= 10.0f;
+
+			Plane collision_plane = Plane(Vec3f_ZERO, ground_normal);
+			move_acceleration += ground_normal * (collision_plane.signedDistanceTo(move_acceleration));
+
+			move_acceleration.Normalize();
+			move_acceleration *= 0.04f;
+
+			velocity += move_acceleration;
+
+			velocity.x *= 0.74f;
+			velocity.z *= 0.74f;
+
+			if(getControls().isKeyJustPressed(KEY_SPACE))
+				velocity.y = 0.15f;
+			//else
+				//velocity.y = 0;
 		}
+		else
+		{
+			velocity.x *= 0.98f;
+			velocity.z *= 0.98f;
+		}
+		if(sloped || !grounded)
+			velocity.y += gravity_force.y;
     }
+
+	/*void Render()
+	{
+		if(grounded)
+		{
+			//print("ground");
+			float[] model;
+			Matrix::MakeIdentity(model);
+			Vec3f interpolated_position = entity.transform.old_position.Lerp(entity.transform.position, GoldEngine::render_delta);
+			//Matrix::SetTranslation(model, interpolated_position.x, interpolated_position.y, interpolated_position.z);
+			Vec3f rotation = ground_normal.getSphericalCoordinateAngles();
+			//rotation.Print();
+			Matrix::SetRotationDegrees(model, rotation.x, rotation.y, 0.0f);
+			Matrix::SetTranslation(model, interpolated_position.x, interpolated_position.y, interpolated_position.z);
+			Render::SetModelTransform(model);
+
+			RenderPrimitives::orientation_guide.RenderMeshWithMaterial();
+		}
+	}*/
 }

@@ -275,8 +275,8 @@ namespace RenderPrimitives
         SMaterial material;
         material.DisableAllFlags();
         material.AddTexture("pixel.png");
-        material.SetFlag(SMaterial::ZBUFFER, true);
-        material.SetFlag(SMaterial::ZWRITE_ENABLE, true);
+        material.SetFlag(SMaterial::ZBUFFER, false);
+        material.SetFlag(SMaterial::ZWRITE_ENABLE, false);
         //material.SetFlag(SMaterial::BACK_FACE_CULLING, false);
         //material.SetFlag(SMaterial::WIREFRAME, true);
         material.SetFlag(SMaterial::COLOR_MASK, true);

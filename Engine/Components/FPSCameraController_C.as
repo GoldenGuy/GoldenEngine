@@ -32,7 +32,7 @@ class FPSCameraController : Component
 
             float old_pitch = pitch;
             float old_yaw = yaw;
-            pitch = Maths::Clamp(pitch + diff.y, -90, 90);
+            pitch = Maths::Clamp(pitch + diff.y, -89, 89);
             yaw += diff.x;
             bool change_old = false;
             if(yaw >= 360)
@@ -64,6 +64,6 @@ class FPSCameraController : Component
         Quaternion new_angle = old_angle.Lerp(angle, GoldEngine::render_delta);
         entity.scene.camera.angle = new_angle;
 
-        entity.scene.camera.position = entity.transform.old_position.Lerp(entity.transform.position, GoldEngine::render_delta);
+        entity.scene.camera.position = entity.transform.old_position.Lerp(entity.transform.position, GoldEngine::render_delta) - (new_angle*Vec3f(0,0,2));
     }
 }
