@@ -64,6 +64,9 @@ class Game
 
         Render::ClearZ();
 
+        GUI::SetFont("menu");
+        GUI::DrawText("Massive WIP\n\nR - teleport to start", Vec2f(getScreenWidth()-180, 10), SColor(255, 100, 225, 100));
+
         float[] model;
 		Matrix::MakeIdentity(model);
         Render::SetModelTransform(model);

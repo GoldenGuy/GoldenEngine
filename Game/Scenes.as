@@ -30,7 +30,7 @@ void CreateTestLevel(Scene@ scene)
         //ent.AddComponent(PhysicsComponent(PhysicsComponentType::STATIC, MeshBody(leveltest)));
     }
 
-    {
+    /*{
         Entity@ ent = scene.CreateEntity("triangle");
         //AABB box = AABB(Vec3f(-10, -2, -10), Vec3f(10, 1, 10));
         ent.AddComponent(PhysicsComponent(PhysicsComponentType::STATIC, TriangleBody(Vec3f(-10, 1, -10), Vec3f(0, 2, 10), Vec3f(10, 1, -10))));
@@ -42,11 +42,11 @@ void CreateTestLevel(Scene@ scene)
         };
         ent.AddComponent(MeshRendererComponent(verts));
         //ent.AddComponent(PhysicsComponent(PhysicsComponentType::STATIC, MeshBody(leveltest)));
-    }
+    }*/
 
     {
         Entity@ ent = scene.CreateEntity("obb");
-        ent.SetPositionImmediate(Vec3f(0, 1.5f, -2));
+        ent.SetPositionImmediate(Vec3f(0, 1.5f, -2.5));
         AABB box = AABB(Vec3f(-0.5f), Vec3f(0.5f));
         Transform transform;
         transform.rotation = Quaternion(dtr(36.0f), 0.0f, 0.0f);
@@ -70,6 +70,7 @@ void CreateTestLevel(Scene@ scene)
         Entity@ ent = scene.CreateEntity("mapo");
         ent.AddComponent(ObjRendererComponent("mapo.obj"));
         ent.AddComponent(PhysicsComponent(PhysicsComponentType::STATIC, MeshBody("mapo_collision.cfg")));
+
         //ent.AddComponent(MeshRendererComponent(mapo));
         //ent.AddComponent(DynamicBodyComponent(SphereBody(1)));
         //float x = (float(i % 5) - 2.5f) * 2.5f;

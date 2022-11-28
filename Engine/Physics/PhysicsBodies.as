@@ -116,5 +116,36 @@ class TriangleBody : PhysicsBody
 
 class MeshBody : PhysicsBody
 {
+    TriangleBody[] tris;
 
+    MeshBody(TriangleBody[] _tris)
+    {
+        tris = _tris;
+        type = BodyType::MESH;
+    }
+
+    MeshBody(string filename) // read collision mesh cfg
+    {
+        type = BodyType::MESH;
+        ConfigFile cfg;
+        if (cfg.loadFile(CFileMatcher(filename).getFirst()))
+        {
+            f32[] verts;
+            cfg.readIntoArray_f32(verts, "verts");
+            const int size = verts.size();
+            tris.resize(size/9); // 9 - 3 floats xyz for each vert in TRIANGLE (3*3 = 9)
+            int iterator = 0;
+            for(int i = 0; i < size; i += 9)
+            {
+                tris[iterator] = TriangleBody(Vec3f(0-verts[i], verts[i+1], verts[i+2]), Vec3f(0-verts[i+3], verts[i+4], verts[i+5]), Vec3f(0-verts[i+6], verts[i+7], verts[i+8]));
+                tris[iterator].bod_id = iterator;
+                iterator++;
+            }
+            print("triangles: "+tris.size());
+        }
+        else
+        {
+            print("no file found.");
+        }
+    }
 }

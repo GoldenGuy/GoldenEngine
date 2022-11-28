@@ -148,23 +148,14 @@ class PhysicsEngine
 
                     case BodyType::TRIANGLE:
                     {
-                        //print("AAAAAAAAAAAAAAAAAAAAAAAA");
                         TriangleBody@ triangle = cast<TriangleBody>(second);
-                        //AABB bounds = triangle.body_bounds;
 
                         Vec3f bar = ClosestPtPointTriangle(data.final_pos, triangle.a, triangle.b, triangle.c);
                         
                         Vec3f nearest_point = bar;
 
-                        //nearest_point.x = (bar.x * triangle.a.x + bar.y * triangle.b.x + bar.z * triangle.c.x);
-                        //nearest_point.y = (bar.x * triangle.a.y + bar.y * triangle.b.y + bar.z * triangle.c.y);
-                        //nearest_point.z = (bar.x * triangle.a.z + bar.y * triangle.b.z + bar.z * triangle.c.z);
-
-                        //nearest_point.Print();
-
                         Vec3f ray_to_nearest = nearest_point - data.final_pos;
                         float ray_len = ray_to_nearest.Length();
-                        print("len: "+ray_len);
 
                         if(ray_len > 0)
                         {
@@ -276,7 +267,19 @@ class PhysicsEngine
 
         if(phy_comp.type == PhysicsComponentType::STATIC)
         {
-            statics_spatial_hash.Add(@phy_comp);
+            PhysicsBody@ body = @phy_comp.body;
+            if(body.type == BodyType::MESH) // mesh ist a real body, add it as separate triangles
+            {
+                MeshBody@ mesh_body = cast<MeshBody>(body);
+                const int size = mesh_body.tris.size();
+                print("addin mesh: "+size);
+                for(int i = 0; i < size; i++)
+                {
+                    statics_spatial_hash.Add(@ComponentBodyPair(@phy_comp, @mesh_body.tris[i]));
+                }
+            }
+            else
+                statics_spatial_hash.Add(@ComponentBodyPair(@phy_comp, @body));
         }
     }
 }

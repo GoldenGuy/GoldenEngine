@@ -101,7 +101,13 @@ class PlayerPhysicsComponent : PhysicsComponent
 
     void Tick()
     {
-        if(grounded)
+        if(getControls().isKeyJustPressed(KEY_KEY_R))
+		{
+			entity.SetPositionImmediate(Vec3f_ZERO);
+			velocity = Vec3f_ZERO;
+		}
+
+		if(grounded)
 		{
 			Vec3f forward = entity.scene.camera.angle * Vec3f(0,0,1);
 			forward.y = 0;
@@ -138,9 +144,9 @@ class PlayerPhysicsComponent : PhysicsComponent
 			//move_acceleration.Normalize();
 
 			if(getControls().isKeyPressed(KEY_LSHIFT))
-				move_acceleration *= 0.08f;
+				move_acceleration *= 0.12f;
 			else
-				move_acceleration *= 0.05f;
+				move_acceleration *= 0.06f;
 
 			velocity += move_acceleration;
 
@@ -148,7 +154,7 @@ class PlayerPhysicsComponent : PhysicsComponent
 			velocity.z *= ground_drag;
 
 			if(getControls().isKeyJustPressed(KEY_SPACE))
-				velocity.y = 0.18f;
+				velocity.y = 0.26f;
 			//else
 				//velocity.y = 0;
 		}
