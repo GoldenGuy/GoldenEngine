@@ -118,3 +118,63 @@ float SqDistPointAABB(Vec3f p, AABB b)
 
 	return sqDist;
 }
+
+Vec3f ClosestPtPointTriangle(Vec3f p, Vec3f a, Vec3f b, Vec3f c)
+{
+	// Check if P in vertex region outside A
+	Vec3f ab = b - a;
+	Vec3f ac = c - a;
+	Vec3f ap = p - a;
+	float d1 = ab.Dot(ap);
+	float d2 = ac.Dot(ap);
+
+	if (d1 <= 0.0f && d2 <= 0.0f)
+		return a; // barycentric coordinates (1,0,0)
+
+	// Check if P in vertex region outside B
+	Vec3f bp = p - b;
+	float d3 = ab.Dot(bp);
+	float d4 = ac.Dot(bp);
+
+	if (d3 >= 0.0f && d4 <= d3)
+		return b; // barycentric coordinates (0,1,0)
+
+	// Check if P in edge region of AB, if so return projection of P onto AB
+	float vc = d1*d4 - d3*d2;
+	if (vc <= 0.0f && d1 >= 0.0f && d3 <= 0.0f)
+	{
+		float v = d1 / (d1 - d3);
+		return a + ab * v; // barycentric coordinates (1-v,v,0)
+	}
+
+	// Check if P in vertex region outside C
+	Vec3f cp = p - c;
+	float d5 = ab.Dot(cp);
+	float d6 = ac.Dot(cp);
+
+	if (d6 >= 0.0f && d5 <= d6)
+		return c; // barycentric coordinates (0,0,1)
+
+	// Check if P in edge region of AC, if so return projection of P onto AC
+	float vb = d5*d2 - d1*d6;
+	if (vb <= 0.0f && d2 >= 0.0f && d6 <= 0.0f)
+	{
+		float w = d2 / (d2 - d6);
+		return a + ac * w; // barycentric coordinates (1-w,0,w)
+	}
+
+	// Check if P in edge region of BC, if so return projection of P onto BC
+	float va = d3*d6 - d5*d4;
+	if (va <= 0.0f && (d4 - d3) >= 0.0f && (d5 - d6) >= 0.0f)
+	{
+		float w = (d4 - d3) / ((d4 - d3) + (d5 - d6));
+		return b + (c - b) * w; // barycentric coordinates (0,1-w,w)
+	}
+
+	// P inside face region. Compute Q through its barycentric coordinates (u,v,w)
+	float denom = 1.0f / (va + vb + vc);
+	float v = vb * denom;
+	float w = vc * denom;
+
+	return a + ab * v + ac * w; // = u*a + v*b + w*c, u = va * denom = 1.0f - v - w
+}

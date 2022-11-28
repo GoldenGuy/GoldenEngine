@@ -12,7 +12,9 @@ class PhysicsComponent : Component
     PhysicsComponentType type;
     PhysicsBody@ body;
 
-    Vec3f velocity;
+    Vec3f velocity = Vec3f_ZERO;
+
+    float gravity_scale = 0.0f;
 
     PhysicsComponent(PhysicsComponentType _type, PhysicsBody@ _body)
     {
@@ -35,8 +37,6 @@ class PhysicsComponent : Component
                 mesh.tris[i].bod_id = i;
             }
         }*/
-
-        velocity = Vec3f_ZERO;
     }
 
     void Physics(ResponseResult&out result) // only happens when dynamic

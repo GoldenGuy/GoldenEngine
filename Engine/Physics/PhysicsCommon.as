@@ -175,6 +175,7 @@ class CollisionData
     Vec3f vel;
     Vec3f final_pos;
     float distance_to_collision;
+    Vec3f surface_point;
 	Vec3f surface_normal;
 
 	CollisionData(Vec3f _start_pos = Vec3f_ZERO, Vec3f _velocity = Vec3f_ZERO)
@@ -184,6 +185,7 @@ class CollisionData
         vel = _velocity;
         final_pos = start_pos + vel;
         distance_to_collision = 0.0f;
+        surface_point = Vec3f_ZERO;
 		surface_normal = Vec3f_ZERO;
 	}
 }

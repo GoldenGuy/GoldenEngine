@@ -6,8 +6,8 @@ enum BodyType
     NONE,
     POINT,
     PLANE,
-    //TRIANGLE,
-    //MESH, // should never be dynamic, sorry
+    TRIANGLE,
+    MESH, // should never be dynamic, sorry
     //POLYGON,
     SPHERE,
     ELLIPSOID,
@@ -89,4 +89,32 @@ class OBBBody : PhysicsBody
         
         bounds = AABB(Vec3f(x_min, y_min, z_min) - aabb_margin, Vec3f(x_max, y_max, z_max) + aabb_margin);
     }
+}
+
+class TriangleBody : PhysicsBody
+{
+    Vec3f a, b, c;
+
+    TriangleBody(Vec3f _a, Vec3f _b, Vec3f _c)
+    {
+        a = _a;
+        b = _b;
+        c = _c;
+        type = BodyType::TRIANGLE;
+
+        float x_min = Maths::Min(Maths::Min(a.x, b.x), c.x);
+        float y_min = Maths::Min(Maths::Min(a.y, b.y), c.y);
+        float z_min = Maths::Min(Maths::Min(a.z, b.z), c.z);
+
+        float x_max = Maths::Max(Maths::Max(a.x, b.x), c.x);
+        float y_max = Maths::Max(Maths::Max(a.y, b.y), c.y);
+        float z_max = Maths::Max(Maths::Max(a.z, b.z), c.z);
+
+        bounds = AABB(Vec3f(x_min, y_min, z_min) - aabb_margin, Vec3f(x_max, y_max, z_max) + aabb_margin);
+    }
+}
+
+class MeshBody : PhysicsBody
+{
+
 }

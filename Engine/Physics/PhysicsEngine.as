@@ -101,6 +101,7 @@ class PhysicsEngine
                                 Vec3f surf_normal = ray_to_nearest / ray_len; // basically .Normal()
                                 data.final_pos -= surf_normal * overlap;
                                 data.distance_to_collision = overlap;
+                                data.surface_point = nearest_point;
                                 data.surface_normal = (surf_normal * (-1.0f)).Normal();
 
                                 return true;
@@ -135,7 +136,47 @@ class PhysicsEngine
                                 _final_pos -= surf_normal * overlap;
                                 data.final_pos = box.transform.rotation * _final_pos;
                                 data.distance_to_collision = overlap;
+                                data.surface_point = box.transform.rotation * nearest_point;
                                 data.surface_normal = (box.transform.rotation * surf_normal * (-1.0f)).Normal();
+
+                                return true;
+                            }
+                        }
+                        return false;
+                    }
+                    break;
+
+                    case BodyType::TRIANGLE:
+                    {
+                        //print("AAAAAAAAAAAAAAAAAAAAAAAA");
+                        TriangleBody@ triangle = cast<TriangleBody>(second);
+                        //AABB bounds = triangle.body_bounds;
+
+                        Vec3f bar = ClosestPtPointTriangle(data.final_pos, triangle.a, triangle.b, triangle.c);
+                        
+                        Vec3f nearest_point = bar;
+
+                        //nearest_point.x = (bar.x * triangle.a.x + bar.y * triangle.b.x + bar.z * triangle.c.x);
+                        //nearest_point.y = (bar.x * triangle.a.y + bar.y * triangle.b.y + bar.z * triangle.c.y);
+                        //nearest_point.z = (bar.x * triangle.a.z + bar.y * triangle.b.z + bar.z * triangle.c.z);
+
+                        //nearest_point.Print();
+
+                        Vec3f ray_to_nearest = nearest_point - data.final_pos;
+                        float ray_len = ray_to_nearest.Length();
+                        print("len: "+ray_len);
+
+                        if(ray_len > 0)
+                        {
+                            float overlap = sphere.radius - ray_len;
+
+                            if(overlap > 0)
+                            {
+                                Vec3f surf_normal = ray_to_nearest / ray_len; // basically .Normal()
+                                data.final_pos -= surf_normal * overlap;
+                                data.distance_to_collision = overlap;
+                                data.surface_point = nearest_point;
+                                data.surface_normal = (surf_normal * (-1.0f)).Normal();
 
                                 return true;
                             }

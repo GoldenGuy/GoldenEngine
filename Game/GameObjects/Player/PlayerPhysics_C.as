@@ -37,37 +37,67 @@ class PlayerPhysicsComponent : PhysicsComponent
 
 		CollisionData data = CollisionData(pos, vel);
 		SphereBody@ our_sphere = cast<SphereBody>(body);
+
+		bool collided = false;
 		for(int j = 0; j < precission_steps; j++)
-		for(int j = 0; j < colliders_size; j++)
 		{
-			Vec3f other_pos = colliders[j].comp.entity.transform.position;
-			data.final_pos -= other_pos;
-			if(physics.Collide(@body, @colliders[j].body, @data))
+			bool local_collided = false;
+			for(int j = 0; j < colliders_size; j++)
 			{
-				float normal_dot = Maths::Min(1.0f, data.surface_normal.Dot(Vec3f_UP));
-				//print("normal_dot: "+normal_dot); // 1 is up, 0 is a 90 degree wall, below 0 is ceilings
-				if(normal_dot > 0.5f)
+				Vec3f other_pos = colliders[j].comp.entity.transform.position;
+				data.final_pos -= other_pos;
+				if(physics.Collide(@body, @colliders[j].body, @data))
 				{
-					if(normal_dot > 0.8f)
+					collided = true;
+					local_collided = true;
+					
+					float normal_dot = Maths::Min(1.0f, data.surface_normal.Dot(Vec3f_UP));
+					//print("normal_dot: "+normal_dot); // 1 is up, 0 is a 90 degree wall, below 0 is ceilings
+					if(normal_dot > 0.5f)
 					{
-						grounded = true;
-						ground_normal = data.surface_normal;
+						if(normal_dot > 0.8f)
+						{
+							grounded = true;
+							ground_normal = data.surface_normal;
+						}
+						if(normal_dot < 0.9f)
+							sloped = true;
 					}
-					if(normal_dot < 0.9f)
-						sloped = true;
+					data.surface_point += other_pos;
 				}
+				data.final_pos += other_pos;
 			}
-			data.final_pos += other_pos;
+			if(!local_collided)
+				break;
 		}
 
+		/*if(collided)
+		{
+		Plane collision_plane = Plane(data.final_pos, ground_normal);
+		Vec3f possible_pos = pos+vel;
+		Vec3f projected = possible_pos - ground_normal * (collision_plane.signedDistanceTo(possible_pos));
+
+		result.new_velocity = projected - data.final_pos;
+		//result.new_velocity.Print();
+		projected.Print();
+		data.final_pos.Print();
+		print("-------------");
+		}
+		else
+		{
+			result.new_velocity = vel;
+		}*/
 		result.needed = true;
 		result.new_position = data.final_pos;
 		result.new_velocity = data.final_pos - pos;
 	}
 
 	bool grounded = false;
+	Vec3f surf_point = Vec3f_ZERO;
 	Vec3f ground_normal = Vec3f_ZERO;
 	bool sloped = false;
+	float ground_drag = 0.74f;
+	float air_drag = 0.98f;
 
     void Tick()
     {
@@ -100,29 +130,34 @@ class PlayerPhysicsComponent : PhysicsComponent
 			}
 
 			move_acceleration *= 10.0f;
+			move_acceleration.Normalize();
 
 			Plane collision_plane = Plane(Vec3f_ZERO, ground_normal);
-			move_acceleration += ground_normal * (collision_plane.signedDistanceTo(move_acceleration));
+			move_acceleration -= ground_normal * (collision_plane.signedDistanceTo(move_acceleration));
 
-			move_acceleration.Normalize();
-			move_acceleration *= 0.04f;
+			//move_acceleration.Normalize();
+
+			if(getControls().isKeyPressed(KEY_LSHIFT))
+				move_acceleration *= 0.08f;
+			else
+				move_acceleration *= 0.05f;
 
 			velocity += move_acceleration;
 
-			velocity.x *= 0.74f;
-			velocity.z *= 0.74f;
+			velocity.x *= ground_drag;
+			velocity.z *= ground_drag;
 
 			if(getControls().isKeyJustPressed(KEY_SPACE))
-				velocity.y = 0.15f;
+				velocity.y = 0.18f;
 			//else
 				//velocity.y = 0;
 		}
 		else
 		{
-			velocity.x *= 0.98f;
-			velocity.z *= 0.98f;
+			velocity.x *= air_drag;
+			velocity.z *= air_drag;
 		}
-		if(sloped || !grounded)
+		//if(sloped || !grounded)
 			velocity.y += gravity_force.y;
     }
 
@@ -133,12 +168,12 @@ class PlayerPhysicsComponent : PhysicsComponent
 			//print("ground");
 			float[] model;
 			Matrix::MakeIdentity(model);
-			Vec3f interpolated_position = entity.transform.old_position.Lerp(entity.transform.position, GoldEngine::render_delta);
+			//Vec3f interpolated_position = entity.transform.old_position.Lerp(entity.transform.position, GoldEngine::render_delta);
 			//Matrix::SetTranslation(model, interpolated_position.x, interpolated_position.y, interpolated_position.z);
-			Vec3f rotation = ground_normal.getSphericalCoordinateAngles();
+			//Vec3f rotation = ground_normal.getSphericalCoordinateAngles();
 			//rotation.Print();
-			Matrix::SetRotationDegrees(model, rotation.x, rotation.y, 0.0f);
-			Matrix::SetTranslation(model, interpolated_position.x, interpolated_position.y, interpolated_position.z);
+			//Matrix::SetRotationDegrees(model, rotation.x, rotation.y, 0.0f);
+			Matrix::SetTranslation(model, surf_point.x, surf_point.y, surf_point.z);
 			Render::SetModelTransform(model);
 
 			RenderPrimitives::orientation_guide.RenderMeshWithMaterial();

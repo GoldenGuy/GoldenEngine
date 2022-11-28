@@ -15,9 +15,11 @@ class ObjRendererComponent : Component
     void Init()
     {
         mesh.LoadObjIntoMesh(CFileMatcher(obj_name).getFirst());
-        //mesh.GetMaterial().SetFlag(SMaterial::ANISOTROPIC_FILTER, false);
-        //mesh.GetMaterial().SetFlag(SMaterial::BILINEAR_FILTER, false);
-        //mesh.GetMaterial().SetFlag(SMaterial::TRILINER_FILTER, false);
+        mesh.GetMaterial().SetFlag(SMaterial::LIGHTING, false);
+        mesh.GetMaterial().SetFlag(SMaterial::LIGHTING, false);
+        mesh.GetMaterial().SetFlag(SMaterial::ANISOTROPIC_FILTER, false);
+        mesh.GetMaterial().SetFlag(SMaterial::BILINEAR_FILTER, false);
+        mesh.GetMaterial().SetFlag(SMaterial::TRILINER_FILTER, false);
     }
     
     void Render()
