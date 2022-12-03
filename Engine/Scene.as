@@ -42,7 +42,7 @@ class Scene
 		//Render::SetAmbientLight(color_white);
 
 		float[] proj;
-		Matrix::MakePerspective(proj, dtr(75.0f), float(getScreenWidth())/float(getScreenHeight()), 0.01f, 400.0f);
+		Matrix::MakePerspective(proj, dtr(75.0f), float(getScreenWidth())/float(getScreenHeight()), 0.01f, 100.0f);
 		Render::SetProjectionTransform(proj);
 
 		Render::SetViewTransform(camera.getViewMatrix());
