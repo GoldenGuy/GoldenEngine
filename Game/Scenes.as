@@ -5,7 +5,7 @@ void CreateTestLevel(Scene@ scene)
     //scene.camera.angle = Quaternion(dtr(10), 0, 0);
     scene.camera.angle = Quaternion(dtr(45), 0, 0);
 
-    AABB[] boxez = {
+    /*AABB[] boxez = {
         //AABB(Vec3f(-10, -2, -10), Vec3f(10, 1, 10)),
         AABB(Vec3f(-10, 1, -11), Vec3f(10, 6, -10)),
 
@@ -28,7 +28,7 @@ void CreateTestLevel(Scene@ scene)
         ent.AddComponent(AABBRendererComponent(boxez[i]));
         //ent.AddComponent(MeshRendererComponent(leveltest));
         //ent.AddComponent(PhysicsComponent(PhysicsComponentType::STATIC, MeshBody(leveltest)));
-    }
+    }*/
 
     /*{
         Entity@ ent = scene.CreateEntity("triangle");
@@ -44,7 +44,7 @@ void CreateTestLevel(Scene@ scene)
         //ent.AddComponent(PhysicsComponent(PhysicsComponentType::STATIC, MeshBody(leveltest)));
     }*/
 
-    {
+    /*{
         Entity@ ent = scene.CreateEntity("obb");
         ent.SetPositionImmediate(Vec3f(0, 1.5f, -2.5));
         AABB box = AABB(Vec3f(-0.5f), Vec3f(0.5f));
@@ -53,7 +53,7 @@ void CreateTestLevel(Scene@ scene)
         transform.scale = Vec3f(1.0f, 0.2f, 8.0f);
         ent.AddComponent(PhysicsComponent(PhysicsComponentType::STATIC, OBBBody(box, transform)));
         ent.AddComponent(OOBRendererComponent(box, transform));
-    }
+    }*/
 
     /*for(int i = 0; i < 25; i++)
     {
@@ -68,8 +68,9 @@ void CreateTestLevel(Scene@ scene)
 
     {
         Entity@ ent = scene.CreateEntity("mapo");
-        ent.AddComponent(ObjRendererComponent("mapo.obj"));
-        ent.AddComponent(PhysicsComponent(PhysicsComponentType::STATIC, MeshBody("mapo_collision.cfg")));
+        ent.AddComponent(BSPMap("de_red_square_verts.cfg"));
+        //ent.AddComponent(ObjRendererComponent("mapo.obj"));
+        //ent.AddComponent(PhysicsComponent(PhysicsComponentType::STATIC, MeshBody("mapo_collision.cfg")));
 
         //ent.AddComponent(MeshRendererComponent(mapo));
         //ent.AddComponent(DynamicBodyComponent(SphereBody(1)));
@@ -81,12 +82,14 @@ void CreateTestLevel(Scene@ scene)
     {
         Entity@ ent = scene.CreateEntity("player camera");
         ent.AddComponent(FPSCameraController());
-        //ent.AddComponent(FreeFlyMovement());
+        ent.AddComponent(FreeFlyMovement());
+
         //ent.AddComponent(PlayerPhysicsComponent(EllipsoidBody(Vec3f(1.0f, 1.0f, 1.0f))));
         //ent.AddComponent(PlayerPhysicsComponent(EllipsoidBody(Vec3f(0.4f, 0.86f, 0.4f)*0.5f)));
-        ent.AddComponent(PlayerPhysicsComponent(SphereBody(0.86f*0.5f)));
-        ent.AddComponent(MeshRendererComponent(RenderPrimitives::sphere));
-        ent.SetPositionImmediate(Vec3f(0, 5, 0));
+
+        //ent.AddComponent(PlayerPhysicsComponent(SphereBody(0.86f*0.5f)));
+        //ent.AddComponent(MeshRendererComponent(RenderPrimitives::sphere));
+        ent.SetPositionImmediate(Vec3f(0, 4, 3));
         ent.SetScaleImmediate(Vec3f(0.86f*0.5f));
     }
 }
