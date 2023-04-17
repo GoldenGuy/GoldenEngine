@@ -2,13 +2,15 @@
 class MeshRendererComponent : Component
 {
     Vertex[] vertices;
+    string texture = "default.png";
 
-    MeshRendererComponent(Vertex[] _vertices)
+    MeshRendererComponent(Vertex[] _vertices, string _tex = "default.png")
     {
         hooks = CompHooks::RENDER;
         name = "MeshRendererComponent";
         
         vertices = _vertices;
+        texture = _tex;
     }
 
     void Render()
@@ -22,7 +24,7 @@ class MeshRendererComponent : Component
         Matrix::SetScale(model, entity.transform.scale.x, entity.transform.scale.y, entity.transform.scale.z);
         Render::SetModelTransform(model);
 
-        Render::RawTriangles("default.png", vertices);
+        Render::RawTriangles(texture, vertices);
     }
 }
 
