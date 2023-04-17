@@ -17,10 +17,10 @@ namespace GoldEngine
 	
 	Game@ game;
 	
-	void Init()
+	void Init(Game@ _game)
 	{
 		Print("Init", PrintColor::GRN);
-		@game = @Game();
+		@game = @_game;
 		SaveToRules();
 		game.Init();
 	}
