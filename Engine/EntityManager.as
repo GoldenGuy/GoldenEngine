@@ -71,6 +71,11 @@ class EntityManager
 
     Entity@ CreateEntity(string name)
     {
+        if(ents_size == MAX_ENTITIES)
+        {
+            Print("Cannot create any more entities, limit ["+MAX_ENTITIES+"] is reached!", PrintColor::RED);
+            return null;
+        }
         Entity entity = Entity(name, @scene);
 		entity.id = ents_size;
 		@entities[ents_size] = @entity;
