@@ -14,6 +14,8 @@
 namespace GoldEngine
 {
 	float render_delta = 0.0f;
+
+	ComponentRegistrator comp_register;
 	
 	Game@ game;
 	
