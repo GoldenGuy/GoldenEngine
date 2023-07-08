@@ -7,7 +7,6 @@ uint hash(string str, uint arrSize)
     return hash % arrSize;
 }
 
-
 class Data
 {
     string key;

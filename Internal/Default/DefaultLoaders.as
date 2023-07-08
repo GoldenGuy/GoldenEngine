@@ -16,3 +16,5 @@ bool LoadMap( CMap@ map, const string &in fileName )
 	SetScreenFlash(255, 0, 0, 0, 1.0f);
 	return true;
 }
+
+// you can create minimap icon here

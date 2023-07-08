@@ -1,7 +1,10 @@
 
-#include "Scenes.as"
-
 class Scene
+{
+	Camera camera;
+	Entity@[] entities;
+}
+/*class Scene
 {
 	Camera camera;
 
@@ -77,4 +80,4 @@ Scene NewScene() // haha :)
 	Scene output = Scene();
 	output.PreInit();
 	return output;
-}
+}*/
