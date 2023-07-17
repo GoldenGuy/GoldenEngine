@@ -230,4 +230,18 @@ class Vec3f
 	{
 		return this - (normal * (2.0f * this.Dot(normal)));
 	}
+
+	void Serialize(CBitStream@ stream)
+	{
+		stream.write_f32(x);
+		stream.write_f32(y);
+		stream.write_f32(z);
+	}
+
+	void Deserialize(CBitStream@ stream)
+	{
+		x = stream.read_f32();
+		y = stream.read_f32();
+		z = stream.read_f32();
+	}
 }

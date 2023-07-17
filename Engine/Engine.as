@@ -1,84 +1,30 @@
 
-#include "Maths.as"
-#include "Entity.as"
 #include "Debug.as"
-#include "DefaultModels.as"
-#include "Camera.as"
-#include "Scene.as"
+#include "Maths.as"
+
+#include "Networking.as"
+
 #include "Game.as"
+#include "Scene.as"
+#include "Entity.as"
+#include "Camera.as"
 
-namespace GoldEngine
-{
-	float render_delta = 0.0f;
+#include "DefaultModels.as"
 
-	bool localhost = false;
-	
-	void Init()
-	{
-		Print("Init", PrintColor::GRN);
-		SaveToRules();
-		game.Init();
-	}
 
-	void Tick()
-	{
-		render_delta = 0.0f;
-		game.Tick();
-	}
-
-	void Render()
-	{
-		if(game is null)
-		{
-			getFromRules();
-			if(game is null)
-			{
-				error("Game not initialized");
-			}
-		}
-		else
-		{
-			game.Render();
-
-			if(Menu::getMainMenu() is null)
-            	//render_delta += getRenderApproximateCorrectionFactor();
-				render_delta += getRenderExactDeltaTime() * getTicksASecond();
-		}
-	}
-
-	void SaveToRules()
-	{
-		getRules().set("Game", @game);
-	}
-
-	void getFromRules()
-	{
-		getRules().get("Game", @game);
-	}
-}
-
-void onReload(CRules@ this)
-{
-	GoldEngine::Init();
-
-	if(isClient())
-	{
-		int id = this.get_s32("render_id");
-		if(id != -1) Render::RemoveScript(id);
-		id = Render::addScript(Render::layer_postworld, getCurrentScriptName(), "Render", 0);
-		this.set_s32("render_id", id);
-	}
-}
+bool localhost = false;
+float render_delta = 0.0f;
 
 void onInit(CRules@ this)
 {
 	if(isClient())
 	{
 		this.set_s32("render_id", -1);
+
 		if(isServer())
 		{
 			Print("LocalHost Engine Init", PrintColor::YLW);
-			GoldEngine::localhost = true;
+			localhost = true;
 		}
 		else
 		{
@@ -93,17 +39,65 @@ void onInit(CRules@ this)
 	onReload(this);
 }
 
+void onReload(CRules@ this) // in case you use rebuild, since onInit wont run again
+{
+	if(isClient()) // remove old render script
+	{
+		int id = this.get_s32("render_id");
+		if(id != -1) Render::RemoveScript(id);
+	}
+
+	// game init
+	if(isServer())
+	{
+		Print("Game Init", PrintColor::GRN);
+		game.Init();
+	}
+	else
+	{
+		Print("Waiting for game", PrintColor::BLU);
+	}
+	//getRules().set("Game", @game); // crash
+	// end game init
+
+	if(isClient()) // create new render script
+	{
+		int id = Render::addScript(Render::layer_background, getCurrentScriptName(), "Render", 0);
+		this.set_s32("render_id", id);
+	}
+}
+
 void onTick(CRules@ this)
 {
-	GoldEngine::Tick();
+	render_delta = 0.0f;
+	game.Tick();
+
+	if(isServer() && !localhost)
+	{
+		CBitStream stream;
+		stream.write_u32(NetCommands::update_game);
+		game.Serialize(stream);
+		this.SendCommand(69, stream, true);
+	}
 }
 
 void Render(int id)
 {
-	GoldEngine::Render();
+	if(game is null)
+	{
+		//getRules().get("Game", @game); // looks like i dont need this
+		//if(game is null)
+			Print("Game not initialized", PrintColor::RED);
+	}
+	else
+	{
+		game.Render();
+
+		if(Menu::getMainMenu() is null) // if we are in menu (or other checks to prevent delta time updates, todo)
+			render_delta += getRenderExactDeltaTime() * getTicksASecond();
+			//render_delta += getRenderApproximateCorrectionFactor();
+	}
 }
 
-void ShowTeamMenu( CRules@ this ) // overrides team menu if the hook exists
-{
-	
-}
+// disable Tab functionality
+void ShowTeamMenu( CRules@ this ) {}
