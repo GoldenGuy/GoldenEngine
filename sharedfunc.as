@@ -1,0 +1,2 @@
+
+funcdef void peepeepoopoo(string);
