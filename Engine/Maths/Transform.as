@@ -69,23 +69,23 @@ class Transform
 
     void Serialize(CBitStream@ stream)
     {
-        stream.write_bool(pos_changed);
-        stream.write_bool(rot_changed);
-        stream.write_bool(scale_changed);
+        //stream.write_bool(pos_changed);
+        //stream.write_bool(rot_changed);
+        //stream.write_bool(scale_changed);
 
-        if(pos_changed)
+        //if(pos_changed)
         {
             stream.write_f32(position.x);
             stream.write_f32(position.y);
             stream.write_f32(position.z);
         }
-        if(rot_changed)
+        //if(rot_changed)
         {
             stream.write_f32(rotation.x);
             stream.write_f32(rotation.y);
             stream.write_f32(rotation.z);
         }
-        if(scale_changed)
+        //if(scale_changed)
         {
             stream.write_f32(scale.x);
             stream.write_f32(scale.y);
@@ -95,23 +95,23 @@ class Transform
 
     void Deserialize(CBitStream@ stream)
     {
-        pos_changed = stream.read_bool();
-        rot_changed = stream.read_bool();
-        scale_changed = stream.read_bool();
+        //pos_changed = stream.read_bool();
+        //rot_changed = stream.read_bool();
+        //scale_changed = stream.read_bool();
 
-        if(pos_changed)
+        //if(pos_changed)
         {
             position.x = stream.read_f32();
             position.y = stream.read_f32();
             position.z = stream.read_f32();
         }
-        if(rot_changed)
+        //if(rot_changed)
         {
             rotation.x = stream.read_f32();
             rotation.y = stream.read_f32();
             rotation.z = stream.read_f32();
         }
-        if(scale_changed)
+        //if(scale_changed)
         {
             scale.x = stream.read_f32();
             scale.y = stream.read_f32();
