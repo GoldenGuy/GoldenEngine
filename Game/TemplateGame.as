@@ -6,7 +6,17 @@ class TemplateGame : Game
 {
     void Init()
     {
-        Entity@ ent = server_CreateEntity(1);
+        Random _r(Time_Local());
+
+        // create 10 template entities
+        for(int i = 0; i < 10; i++)
+        {
+            Entity@ ent = server_CreateEntity(1);
+            ent.name = "Box";
+            ent.transform.SetPosition(Vec3f(_r.NextRanged(500)+100, _r.NextRanged(500)+100, 0.0f));
+        }
+
+        //Entity@ ent = server_CreateEntity(1);
     }
 
     Entity@ CreateEntityFromType(u16 type)

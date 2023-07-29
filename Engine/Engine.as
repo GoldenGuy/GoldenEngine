@@ -15,6 +15,7 @@
 bool localhost = false;
 float render_delta = 0.0f;
 bool game_created = false;
+bool asked = false;
 
 void onInit(CRules@ this)
 {
@@ -77,7 +78,7 @@ void onTick(CRules@ this)
 {
 	render_delta = 0.0f;
 
-	if(isClient() && !localhost)
+	if(isClient() && !localhost && !asked)
 	{
 		CPlayer@ my_player = getLocalPlayer();
 		if(my_player != null)
@@ -86,6 +87,7 @@ void onTick(CRules@ this)
 			CBitStream stream;
 			stream.write_netid(my_player.getNetworkID());
 			this.SendCommand(NetCommands::c_need_game, stream, false);
+			asked = true;
 		}
 	}
 

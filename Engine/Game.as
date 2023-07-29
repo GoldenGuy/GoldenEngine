@@ -105,6 +105,7 @@ class Game
             ent.CreateFromData(stream);
             @entities[id] = @ent;
         }
+        game_created = true;
     }
 
     void SendDelta(CBitStream@ stream)
@@ -172,6 +173,7 @@ class Game
             if(entities[i] == null) // a free spot
             {
                 @entities[i] = @entity;
+                entity.id = i; // woops haha i forgor :)
                 entity.just_created = true;
                 added = true;
                 print("entity "+entity.name+" created");
