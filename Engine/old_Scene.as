@@ -16,11 +16,11 @@ class Scene
 	{
 		for (int i = 0; i < entities.size(); i++)
 		{
-			if(entities[i].transform.dirty)
-			{
-				entities[i].transform.UpdateOld();
-			}
-			entities[i].Tick();
+			Entity@ ent = @entities[i];
+			ent.transform.UpdateOld();
+			ent.Tick();
+			if(ent.transform.NeedsUpdate())
+				ent.net_update = true;
 		}
 	}
 
@@ -39,18 +39,18 @@ class Scene
 		entity.SetScene(this);
 	}
 
-	void SendFullData(CBitStream@ stream)
+	void ToData(CBitStream@ stream)
     {
         // send all entities
 		stream.write_u32(entities.size());
 		for (int i = 0; i < entities.size(); i++)
 		{
-			stream.write_u16(entities[i].type);
-			entities[i].SendFullData(stream);
+			//stream.write_u16(entities[i].type);
+			entities[i].ToData(stream);
 		}
     }
 
-    void CreateFromData(CBitStream@ stream)
+    void FromData(CBitStream@ stream)
     {
         // create scene from data
 		Print("Creating scene", PrintColor::YLW);
@@ -61,16 +61,16 @@ class Scene
 		{
 			u16 entity_type = stream.read_u16();
 			Entity@ entity = CreateEntityFromType(entity_type);
-			entity.CreateFromData(stream);
+			entity.FromData(stream);
 			AddEntity(entity);
 		}
     }
 
 	void Serialize(CBitStream@ stream)
 	{
-		u32 entities_sent = 0;
+		u16 entities_sent = 0;
 		uint curr_bit_index = stream.getBitIndex();
-		stream.write_u32(5);
+		stream.write_u16(1);
 		for (int i = 0; i < entities.size(); i++)
 		{
 			if(entities[i].net_update)
@@ -81,26 +81,27 @@ class Scene
 				entities_sent++;
 			}
 		}
-		// now replace that first u32 by entities_sent
-		stream.overwrite_at_bit_u32(curr_bit_index, entities_sent);
+		// now replace that first u16 by entities_sent
+		stream.overwrite_at_bit_u16(curr_bit_index, entities_sent);
 	}
 
 	void Deserialize(CBitStream@ stream)
 	{
-		u32 entities_sent = stream.read_u32();
+		u16 entities_sent = stream.read_u16();
 		//print("entities sent: "+entities_sent);
-		int ent_index = 0;
+		//int ent_index = 0;
 		for (int i = 0; i < entities_sent; i++)
 		{
 			int entity_id = stream.read_u32();
-			for(int j = ent_index; j < entities.size(); j++)
+			entities[i].Deserialize(stream);
+			/*for(int j = ent_index; j < entities.size(); j++)
 			{
 				if(entities[j].id == entity_id)
 				{
 					entities[j].Deserialize(stream);
 					ent_index = j;
 				}
-			}
+			}*/
 		}
 	}
 }

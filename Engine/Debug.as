@@ -9,6 +9,12 @@ enum PrintColor
     BLU = 0xFF004BC4
 }
 
+void S_Print(const string&in text, uint color = PrintColor::WHT)
+{
+    if(isServer())
+        Print(text, color);
+}
+
 void Print(const string&in text, uint color = PrintColor::WHT)
 {
     print(text, SColor(color));

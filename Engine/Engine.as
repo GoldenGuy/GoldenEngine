@@ -5,7 +5,7 @@
 #include "Networking.as"
 
 #include "Game.as"
-#include "Scene.as"
+//#include "Scene.as"
 #include "Entity.as"
 #include "Camera.as"
 
@@ -14,6 +14,7 @@
 
 bool localhost = false;
 float render_delta = 0.0f;
+bool game_created = false;
 
 void onInit(CRules@ this)
 {
@@ -50,14 +51,19 @@ void onReload(CRules@ this) // in case you use rebuild, since onInit wont run ag
 	// game init
 	if(isServer())
 	{
-		Print("Game Init", PrintColor::GRN);
+		new_players.clear();
+		for(int i = 0; i < getPlayersCount(); i++)
+		{
+			new_players.push_back(getPlayer(i).getNetworkID());
+		}
+		Print("[" + getGameTime() + "]" + "Game Init", PrintColor::GRN);
 		game.Init();
 	}
 	else
 	{
-		Print("Waiting for game", PrintColor::BLU);
+		Print("[" + getGameTime() + "]" + "Waiting for game...", PrintColor::GRY);
+		game_created = false;
 	}
-	//getRules().set("Game", @game); // crash
 	// end game init
 
 	if(isClient()) // create new render script
@@ -70,30 +76,113 @@ void onReload(CRules@ this) // in case you use rebuild, since onInit wont run ag
 void onTick(CRules@ this)
 {
 	render_delta = 0.0f;
+
+	if(isClient() && !localhost)
+	{
+		CPlayer@ my_player = getLocalPlayer();
+		if(my_player != null)
+		{
+			// tell server that we are ready to start
+			CBitStream stream;
+			stream.write_netid(my_player.getNetworkID());
+			this.SendCommand(NetCommands::c_need_game, stream, false);
+		}
+	}
+
+	// if we have new entities created previously
+	/*if(isServer() && new_entities.size() > 0)
+	{
+		// add them to the scene, init themand send them to everyone
+		for(int i = 0; i < new_entities.size(); i++)
+		{
+			Entity@ ent = new_entities[i];
+			Print("[" + getGameTime() + "]" + "Added new entity \""+ent.name+"\"", PrintColor::GRN);
+			//ent.scene.AddEntity(ent);
+			ent.Init();
+
+			if(!localhost)
+			{
+				CBitStream stream;
+				//ent.ToData(stream);
+				server_SendCommand(NetCommands::s_create_entity, stream);
+			}
+		}
+		new_entities.clear();
+	}*/
+
+	// game tick duh
 	game.Tick();
 
+	// network update stuff
 	if(isServer() && !localhost)
 	{
+		// send create to new ppl
+		if(new_players.size() > 0)
+		{
+			CBitStream stream;
+			game.SendCreate(stream);
+			for(int i = 0; i < new_players.size(); i++)
+			{
+				uint16 netid = new_players[i];
+				CPlayer@ player = getPlayerByNetworkId(netid);
+				if(player != null)
+				{
+					this.SendCommand(NetCommands::s_send_game, stream, player);
+				}
+			}
+			new_players.clear();
+		}
+
+		// send deltas
 		CBitStream stream;
-		stream.write_u32(NetCommands::update_game);
-		game.Serialize(stream);
-		this.SendCommand(69, stream, true);
+		game.SendDelta(stream);
+		this.SendCommand(NetCommands::s_send_delta, stream, true);
 	}
+
+	// network update stuff
+	/*if(isServer() && game_created && !localhost)
+	{
+		// send game update to everyone (make separate deltas for everryone TODO)
+		if(getPlayerCount() > 0)
+		{
+			CBitStream stream;
+			//game.Serialize(stream);
+			server_SendCommand(NetCommands::s_update_game, stream);
+		}
+
+		// send game create data to new players
+		if(new_players.size() > 0)
+		{
+			Print("[" + getGameTime() + "]" + "Sending game create data to new players:", PrintColor::GRN);
+			CBitStream stream;
+			//game.ToData(stream);
+
+			for(int i = 0; i < new_players.size(); i++)
+			{
+				CPlayer@ player = getPlayer(new_players[i]);
+				if(player != null)
+				{
+					Print("   "+player.getUsername(), PrintColor::GRN);
+					server_SendCommand(NetCommands::s_send_game, stream, player);
+				}
+			}
+
+			new_players.clear();
+		}
+	}*/
 }
 
 void Render(int id)
 {
 	if(game is null)
 	{
-		//getRules().get("Game", @game); // looks like i dont need this
-		//if(game is null)
-			Print("Game not initialized", PrintColor::RED);
+		Print("Game not initialized", PrintColor::RED);
 	}
 	else
 	{
 		game.Render();
 
-		if(Menu::getMainMenu() is null) // if we are in menu (or other checks to prevent delta time updates, todo)
+		//if(Menu::getMainMenu() is null) // if we are in menu (or other checks to prevent delta time updates, todo)
 			render_delta += getRenderExactDeltaTime() * getTicksASecond();
 			//render_delta += getRenderApproximateCorrectionFactor();
 	}

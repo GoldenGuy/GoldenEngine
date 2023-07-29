@@ -1,10 +1,9 @@
 
-class BoxEntity : Entity
+class PlayerEntity : Entity
 {
-    BoxEntity()
+    PlayerEntity()
     {
-        super();
-        type = 1;
+        type = 2;
     }
 
     void Tick()

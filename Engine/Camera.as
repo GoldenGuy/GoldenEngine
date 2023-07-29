@@ -1,14 +1,14 @@
 
 class Camera
 {
-    Scene@ scene;
+    //Scene@ scene;
     
     Vec3f position;
     Quaternion angle;
 
-    Camera(Scene@ _scene)
+    Camera()//Scene@ _scene)
     {
-        @scene = @_scene;
+        //@scene = @_scene;
         position = Vec3f();
         angle = Quaternion();//Vec3f(0, 0, 0), 1);
     }
