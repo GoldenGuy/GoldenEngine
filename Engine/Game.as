@@ -21,7 +21,7 @@ const u8 MAX_ENTITIES = 255; // for test, will increase if needed
 class Game
 {
     Camera camera;
-    Entity@[] entities(MAX_ENTITIES);
+    Entity@[] entities(MAX_ENTITIES, null);
 
     // world class TODO
     // ---
@@ -33,7 +33,7 @@ class Game
     {
         // init runs on server only, client will only get create command
         camera = Camera();
-        Entity@[] _entities(MAX_ENTITIES);
+        Entity@[] _entities(MAX_ENTITIES, null);
         entities = _entities;
     }
 
@@ -87,7 +87,6 @@ class Game
             if(entities[i] == null)
                 continue;
             
-            stream.write_bool(true); // create or update
             stream.write_u8(i);
             stream.write_u16(entities[i].type);
             entities[i].SendCreate(stream);
@@ -101,7 +100,6 @@ class Game
         u8 ents = stream.read_u8();
         for(int i = 0; i < ents; i++)
         {
-            stream.read_bool();
             u8 id = stream.read_u8();
             u16 type = stream.read_u16();
             Entity@ ent = CreateEntityFromType(type);
@@ -165,7 +163,7 @@ class Game
                 Entity@ ent = entities[id];
                 if(ent == null)
                 {
-                    Print("entity not found", PrintColor::RED);
+                    Print("entity not found id: "+id, PrintColor::RED);
                     return;
                 }
                 ent.ReadDelta(stream);

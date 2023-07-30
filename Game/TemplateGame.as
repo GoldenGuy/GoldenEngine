@@ -19,8 +19,6 @@ class TemplateGame : Game
         ent.transform.SetPosition(Vec3f(_r.NextRanged(500)+100, _r.NextRanged(500)+100, 0.0f));
         ent.word_of_our_sponsor = "Raid SHADOW LEGENDS";
         server_CreateEntity(ent);
-
-        //Entity@ ent = server_CreateEntity(1);
     }
 
     Entity@ CreateEntityFromType(u16 type)
