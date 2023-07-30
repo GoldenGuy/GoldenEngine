@@ -43,25 +43,25 @@ class Entity
         stream.write_u8(id);
         stream.write_u16(type);
         stream.write_string(name);
-        transform.Serialize(stream);
+        transform.SendCreate(stream);
     }
 
     void CreateFromData(CBitStream@ stream)
     {
         name = stream.read_string();
-        transform.Deserialize(stream);
+        transform.CreateFromData(stream);
     }
 
     void SendDelta(CBitStream@ stream) // every tick
     {
         stream.write_bool(false);
         stream.write_u8(id);
-        transform.Serialize(stream);
+        transform.SendDelta(stream);
     }
 
     void ReadDelta(CBitStream@ stream)
     {
-        transform.Deserialize(stream);
+        transform.ReadDelta(stream);
     }
 
     void Destroy()

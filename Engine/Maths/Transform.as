@@ -67,55 +67,85 @@ class Transform
         return pos_changed || rot_changed || scale_changed;
     }
 
-    void Serialize(CBitStream@ stream)
+    void SendCreate(CBitStream@ stream)
     {
-        //stream.write_bool(pos_changed);
-        //stream.write_bool(rot_changed);
-        //stream.write_bool(scale_changed);
+        stream.write_f32(position.x);
+        stream.write_f32(position.y);
+        stream.write_f32(position.z);
+        stream.write_f32(rotation.x);
+        stream.write_f32(rotation.y);
+        stream.write_f32(rotation.z);
+        stream.write_f32(scale.x);
+        stream.write_f32(scale.y);
+        stream.write_f32(scale.z);
+    }
 
-        //if(pos_changed)
+    void CreateFromData(CBitStream@ stream)
+    {
+        position.x = stream.read_f32();
+        position.y = stream.read_f32();
+        position.z = stream.read_f32();
+        old_position = position;
+        rotation.x = stream.read_f32();
+        rotation.y = stream.read_f32();
+        rotation.z = stream.read_f32();
+        old_rotation = rotation;
+        scale.x = stream.read_f32();
+        scale.y = stream.read_f32();
+        scale.z = stream.read_f32();
+        old_scale = scale;
+    }
+
+    void SendDelta(CBitStream@ stream)
+    {
+        bool needed = NeedsUpdate();
+        stream.write_bool(needed);
+        if(needed)
         {
-            stream.write_f32(position.x);
-            stream.write_f32(position.y);
-            stream.write_f32(position.z);
-        }
-        //if(rot_changed)
-        {
-            stream.write_f32(rotation.x);
-            stream.write_f32(rotation.y);
-            stream.write_f32(rotation.z);
-        }
-        //if(scale_changed)
-        {
-            stream.write_f32(scale.x);
-            stream.write_f32(scale.y);
-            stream.write_f32(scale.z);
+            if(pos_changed)
+            {
+                stream.write_f32(position.x);
+                stream.write_f32(position.y);
+                stream.write_f32(position.z);
+            }
+            if(rot_changed)
+            {
+                stream.write_f32(rotation.x);
+                stream.write_f32(rotation.y);
+                stream.write_f32(rotation.z);
+            }
+            if(scale_changed)
+            {
+                stream.write_f32(scale.x);
+                stream.write_f32(scale.y);
+                stream.write_f32(scale.z);
+            }
         }
     }
 
-    void Deserialize(CBitStream@ stream)
+    void ReadDelta(CBitStream@ stream)
     {
-        //pos_changed = stream.read_bool();
-        //rot_changed = stream.read_bool();
-        //scale_changed = stream.read_bool();
-
-        //if(pos_changed)
+        bool needed = stream.read_bool();
+        if(needed)
         {
-            position.x = stream.read_f32();
-            position.y = stream.read_f32();
-            position.z = stream.read_f32();
-        }
-        //if(rot_changed)
-        {
-            rotation.x = stream.read_f32();
-            rotation.y = stream.read_f32();
-            rotation.z = stream.read_f32();
-        }
-        //if(scale_changed)
-        {
-            scale.x = stream.read_f32();
-            scale.y = stream.read_f32();
-            scale.z = stream.read_f32();
+            if(pos_changed)
+            {
+                position.x = stream.read_f32();
+                position.y = stream.read_f32();
+                position.z = stream.read_f32();
+            }
+            if(rot_changed)
+            {
+                rotation.x = stream.read_f32();
+                rotation.y = stream.read_f32();
+                rotation.z = stream.read_f32();
+            }
+            if(scale_changed)
+            {
+                scale.x = stream.read_f32();
+                scale.y = stream.read_f32();
+                scale.z = stream.read_f32();
+            }
         }
     }
 }
