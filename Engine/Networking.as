@@ -60,6 +60,12 @@ void onCommand( CRules@ this, u8 cmd, CBitStream@ params )
 
 class NetVar
 {
+    private uint edited_gametime;
+    void Edited() { edited_gametime = getGameTime(); }
+
+    void WriteCreate(CBitStream@ stream) { Print("NetVar WriteCreate not implemented", PrintColor::RED); }
+    void ReadCreate(CBitStream@ stream) { Print("NetVar ReadCreate not implemented", PrintColor::RED); }
+    
     bool should_write(CBitStream@ stream)
     {
         bool write = getGameTime() == edited_gametime;
@@ -72,12 +78,17 @@ class NetVar
         bool read = stream.read_bool();
         return read;
     }
-    
-    uint edited_gametime;
 
-    void Edited()
+    void WriteDelta(CBitStream@ stream)
     {
-        edited_gametime = getGameTime();
+        if(should_write(stream))
+            WriteCreate(stream);
+    }
+
+    void ReadDelta(CBitStream@ stream)
+    {
+        if(should_read(stream))
+            ReadCreate(stream);
     }
 }
 
@@ -100,18 +111,6 @@ class net_bool : NetVar
     {
         value = stream.read_bool();
     }
-
-    void WriteDelta(CBitStream@ stream)
-    {
-        if(should_write(stream))
-            stream.write_bool(value);
-    }
-
-    void ReadDelta(CBitStream@ stream)
-    {
-        if(should_read(stream))
-            value = stream.read_bool();
-    }
 }
 
 class net_u32 : NetVar
@@ -133,18 +132,6 @@ class net_u32 : NetVar
     {
         value = stream.read_u32();
     }
-
-    void WriteDelta(CBitStream@ stream)
-    {
-        if(should_write(stream))
-            stream.write_u32(value);
-    }
-
-    void ReadDelta(CBitStream@ stream)
-    {
-        if(should_read(stream))
-            value = stream.read_u32();
-    }
 }
 
 class net_string : NetVar
@@ -165,17 +152,5 @@ class net_string : NetVar
     void ReadCreate(CBitStream@ stream)
     {
         value = stream.read_string();
-    }
-
-    void WriteDelta(CBitStream@ stream)
-    {
-        if(should_write(stream))
-            stream.write_string(value);
-    }
-
-    void ReadDelta(CBitStream@ stream)
-    {
-        if(should_read(stream))
-            value = stream.read_string();
     }
 }
