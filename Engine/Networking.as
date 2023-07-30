@@ -63,8 +63,8 @@ class NetVar
     private uint edited_gametime;
     void Edited() { edited_gametime = getGameTime(); }
 
-    void WriteCreate(CBitStream@ stream) { Print("NetVar WriteCreate not implemented", PrintColor::RED); }
-    void ReadCreate(CBitStream@ stream) { Print("NetVar ReadCreate not implemented", PrintColor::RED); }
+    void Write(CBitStream@ stream) { Print("NetVar WriteCreate not implemented", PrintColor::RED); }
+    void Read(CBitStream@ stream) { Print("NetVar ReadCreate not implemented", PrintColor::RED); }
     
     bool should_write(CBitStream@ stream)
     {
@@ -94,63 +94,63 @@ class NetVar
 
 class net_bool : NetVar
 {
-    bool value;
+    bool v;
 
     void opAssign(bool _value)
     {
-        value = _value;
+        v = _value;
         Edited();
     }
 
-    void WriteCreate(CBitStream@ stream)
+    void Write(CBitStream@ stream)
     {
-        stream.write_bool(value);
+        stream.write_bool(v);
     }
 
-    void ReadCreate(CBitStream@ stream)
+    void Read(CBitStream@ stream)
     {
-        value = stream.read_bool();
+        v = stream.read_bool();
     }
 }
 
 class net_u32 : NetVar
 {
-    u32 value;
+    u32 v;
 
     void opAssign(u32 _value)
     {
-        value = _value;
+        v = _value;
         Edited();
     }
 
-    void WriteCreate(CBitStream@ stream)
+    void Write(CBitStream@ stream)
     {
-        stream.write_u32(value);
+        stream.write_u32(v);
     }
 
-    void ReadCreate(CBitStream@ stream)
+    void Read(CBitStream@ stream)
     {
-        value = stream.read_u32();
+        v = stream.read_u32();
     }
 }
 
 class net_string : NetVar
 {
-    string value;
+    string v;
 
     void opAssign(string _value)
     {
-        value = _value;
+        v = _value;
         Edited();
     }
 
-    void WriteCreate(CBitStream@ stream)
+    void Write(CBitStream@ stream)
     {
-        stream.write_string(value);
+        stream.write_string(v);
     }
 
-    void ReadCreate(CBitStream@ stream)
+    void Read(CBitStream@ stream)
     {
-        value = stream.read_string();
+        v = stream.read_string();
     }
 }

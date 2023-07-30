@@ -80,19 +80,19 @@ class TemplateEntityLOL : Entity
     {
         Vec2f pos = Vec2f_lerp(Vec2f(transform.old_position.x, transform.old_position.y), Vec2f(transform.position.x, transform.position.y), render_delta);
         GUI::DrawRectangle(pos, pos+Vec2f(100,20), SColor(255,255,0,0));
-        GUI::DrawText(word_of_our_sponsor.value, pos, color_white);
+        GUI::DrawText(word_of_our_sponsor.v, pos, color_white);
     }
 
     void SendCreate(CBitStream@ stream)
     {
         Entity::SendCreate(stream);
-        word_of_our_sponsor.WriteCreate(stream);
+        word_of_our_sponsor.Write(stream);
     }
 
     void CreateFromData(CBitStream@ stream)
     {
         Entity::CreateFromData(stream);
-        word_of_our_sponsor.ReadCreate(stream);
+        word_of_our_sponsor.Read(stream);
     }
 
     void SendDelta(CBitStream@ stream)
