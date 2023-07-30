@@ -102,18 +102,21 @@ class Transform
         stream.write_bool(needed);
         if(needed)
         {
+            stream.write_bool(pos_changed);
             if(pos_changed)
             {
                 stream.write_f32(position.x);
                 stream.write_f32(position.y);
                 stream.write_f32(position.z);
             }
+            stream.write_bool(rot_changed);
             if(rot_changed)
             {
                 stream.write_f32(rotation.x);
                 stream.write_f32(rotation.y);
                 stream.write_f32(rotation.z);
             }
+            stream.write_bool(scale_changed);
             if(scale_changed)
             {
                 stream.write_f32(scale.x);
@@ -128,19 +131,22 @@ class Transform
         bool needed = stream.read_bool();
         if(needed)
         {
-            if(pos_changed)
+            bool _pos_changed = stream.read_bool();
+            if(_pos_changed)
             {
                 position.x = stream.read_f32();
                 position.y = stream.read_f32();
                 position.z = stream.read_f32();
             }
-            if(rot_changed)
+            bool _rot_changed = stream.read_bool();
+            if(_rot_changed)
             {
                 rotation.x = stream.read_f32();
                 rotation.y = stream.read_f32();
                 rotation.z = stream.read_f32();
             }
-            if(scale_changed)
+            bool _scale_changed = stream.read_bool();
+            if(_scale_changed)
             {
                 scale.x = stream.read_f32();
                 scale.y = stream.read_f32();
