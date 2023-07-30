@@ -50,11 +50,11 @@ class Game
                 continue;
             }
 
-            if(entities[i].just_created)
+            /*if(entities[i].just_created)
             {
-                entities[i].just_created = false;
+                //entities[i].just_created = false;
                 entities[i].Init();
-            }
+            }*/
             
             entities[i].Tick();
         }
@@ -125,6 +125,7 @@ class Game
             {
                 entities[i].SendCreate(stream);
                 entities[i].net_update = false;
+                entities[i].just_created = false;
                 ents++;
             }
             else if(entities[i].net_update) // if it was changed
@@ -186,6 +187,34 @@ class Game
             return null;
         }
         return entity;
+    }
+
+    bool server_CreateEntity(Entity@ ent)
+    {
+        if(!isServer())
+        {
+            Print("are you stupid? are you insane? it says server_, dont run it on client", PrintColor::RED);
+            return false;
+        }
+        bool added = false;
+        for(int i = 0; i < MAX_ENTITIES; i++)
+        {
+            if(entities[i] == null) // a free spot
+            {
+                @entities[i] = @ent;
+                ent.id = i;
+                ent.just_created = true;
+                added = true;
+                print("entity "+ent.name+" created");
+                break;
+            }
+        }
+        if(!added)
+        {
+            Print("Too many entities!!!", PrintColor::RED);
+            return false;
+        }
+        return true;
     }
 
     Entity@ CreateEntityFromType(u16 type)

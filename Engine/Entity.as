@@ -16,7 +16,7 @@ class Entity
         @scene = @scene;
     }*/
 
-	void Init()
+	void Init() // i actually dont know when to call this, and if its even needed
     {
         
     }
@@ -48,11 +48,8 @@ class Entity
 
     void CreateFromData(CBitStream@ stream)
     {
-        //type = stream.read_u16(); // nope, type is read in scene, because we need to know it before we create an actual entity
-        //id = stream.read_u16();
         name = stream.read_string();
         transform.Deserialize(stream);
-
     }
 
     void SendDelta(CBitStream@ stream) // every tick

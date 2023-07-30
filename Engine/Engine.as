@@ -91,27 +91,6 @@ void onTick(CRules@ this)
 		}
 	}
 
-	// if we have new entities created previously
-	/*if(isServer() && new_entities.size() > 0)
-	{
-		// add them to the scene, init themand send them to everyone
-		for(int i = 0; i < new_entities.size(); i++)
-		{
-			Entity@ ent = new_entities[i];
-			Print("[" + getGameTime() + "]" + "Added new entity \""+ent.name+"\"", PrintColor::GRN);
-			//ent.scene.AddEntity(ent);
-			ent.Init();
-
-			if(!localhost)
-			{
-				CBitStream stream;
-				//ent.ToData(stream);
-				server_SendCommand(NetCommands::s_create_entity, stream);
-			}
-		}
-		new_entities.clear();
-	}*/
-
 	// game tick duh
 	game.Tick();
 
@@ -140,38 +119,6 @@ void onTick(CRules@ this)
 		game.SendDelta(stream);
 		this.SendCommand(NetCommands::s_send_delta, stream, true);
 	}
-
-	// network update stuff
-	/*if(isServer() && game_created && !localhost)
-	{
-		// send game update to everyone (make separate deltas for everryone TODO)
-		if(getPlayerCount() > 0)
-		{
-			CBitStream stream;
-			//game.Serialize(stream);
-			server_SendCommand(NetCommands::s_update_game, stream);
-		}
-
-		// send game create data to new players
-		if(new_players.size() > 0)
-		{
-			Print("[" + getGameTime() + "]" + "Sending game create data to new players:", PrintColor::GRN);
-			CBitStream stream;
-			//game.ToData(stream);
-
-			for(int i = 0; i < new_players.size(); i++)
-			{
-				CPlayer@ player = getPlayer(new_players[i]);
-				if(player != null)
-				{
-					Print("   "+player.getUsername(), PrintColor::GRN);
-					server_SendCommand(NetCommands::s_send_game, stream, player);
-				}
-			}
-
-			new_players.clear();
-		}
-	}*/
 }
 
 void Render(int id)
