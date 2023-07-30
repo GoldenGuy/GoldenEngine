@@ -163,6 +163,11 @@ class Game
             else // just update then
             {
                 Entity@ ent = entities[id];
+                if(ent == null)
+                {
+                    Print("entity not found", PrintColor::RED);
+                    return;
+                }
                 ent.ReadDelta(stream);
             }
         }
