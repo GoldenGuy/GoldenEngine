@@ -87,6 +87,9 @@ class Game
             if(entities[i] == null)
                 continue;
             
+            stream.write_bool(true); // create or update
+            stream.write_u8(i);
+            stream.write_u16(entities[i].type);
             entities[i].SendCreate(stream);
             ents++;
         }
@@ -123,6 +126,9 @@ class Game
             
             if(entities[i].just_created) // if just created
             {
+                stream.write_bool(true); // create or update
+                stream.write_u8(i);
+                stream.write_u16(entities[i].type);
                 entities[i].SendCreate(stream);
                 entities[i].net_update = false;
                 entities[i].just_created = false;
@@ -130,6 +136,8 @@ class Game
             }
             else if(entities[i].net_update) // if it was changed
             {
+                stream.write_bool(false);
+                stream.write_u8(i);
                 entities[i].SendDelta(stream);
                 entities[i].net_update = false;
                 ents++;
