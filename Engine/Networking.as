@@ -58,32 +58,6 @@ void onCommand( CRules@ this, u8 cmd, CBitStream@ params )
     game.ProcessCommand(cmd, params);
 }
 
-//Entity@[] new_entities;
-
-/*void onNewPlayerJoin( CRules@ this, CPlayer@ player )
-{
-    if(isServer() && !localhost)
-    {
-        new_players.push_back(getPlayerIndex(player));
-    }
-}*/
-
-/*void server_SendCommand( uint cmd, CBitStream@ stream ) // sends a command to everyone
-{
-    //CBitStream _stream;
-    //_stream.write_u32(cmd);
-    //_stream.writeBitStream(stream);
-    getRules().SendCommand(cmd, stream, true);
-}
-
-void server_SendCommand( uint cmd, CBitStream@ stream, CPlayer@ player )
-{
-    //CBitStream _stream;
-    //_stream.write_u32(cmd);
-    //_stream.writeBitStream(stream);
-    getRules().SendCommand(cmd, stream, player);
-}*/
-
 class NetVar
 {
     bool should_write(CBitStream@ stream)
@@ -117,13 +91,23 @@ class net_bool : NetVar
         Edited();
     }
 
-    void Write(CBitStream@ stream)
+    void WriteCreate(CBitStream@ stream)
+    {
+        stream.write_bool(value);
+    }
+
+    void ReadCreate(CBitStream@ stream)
+    {
+        value = stream.read_bool();
+    }
+
+    void WriteDelta(CBitStream@ stream)
     {
         if(should_write(stream))
             stream.write_bool(value);
     }
 
-    void Read(CBitStream@ stream)
+    void ReadDelta(CBitStream@ stream)
     {
         if(should_read(stream))
             value = stream.read_bool();
@@ -140,15 +124,58 @@ class net_u32 : NetVar
         Edited();
     }
 
-    void Write(CBitStream@ stream)
+    void WriteCreate(CBitStream@ stream)
+    {
+        stream.write_u32(value);
+    }
+
+    void ReadCreate(CBitStream@ stream)
+    {
+        value = stream.read_u32();
+    }
+
+    void WriteDelta(CBitStream@ stream)
     {
         if(should_write(stream))
             stream.write_u32(value);
     }
 
-    void Read(CBitStream@ stream)
+    void ReadDelta(CBitStream@ stream)
     {
         if(should_read(stream))
             value = stream.read_u32();
+    }
+}
+
+class net_string : NetVar
+{
+    string value;
+
+    void opAssign(string _value)
+    {
+        value = _value;
+        Edited();
+    }
+
+    void WriteCreate(CBitStream@ stream)
+    {
+        stream.write_string(value);
+    }
+
+    void ReadCreate(CBitStream@ stream)
+    {
+        value = stream.read_string();
+    }
+
+    void WriteDelta(CBitStream@ stream)
+    {
+        if(should_write(stream))
+            stream.write_string(value);
+    }
+
+    void ReadDelta(CBitStream@ stream)
+    {
+        if(should_read(stream))
+            value = stream.read_string();
     }
 }

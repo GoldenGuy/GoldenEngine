@@ -15,8 +15,10 @@ class TemplateGame : Game
             ent.transform.SetPosition(Vec3f(_r.NextRanged(500)+100, _r.NextRanged(500)+100, 0.0f));
         }
 
-        Entity@ ent = server_CreateEntity(2);
+        TemplateEntityLOL@ ent = TemplateEntityLOL();
         ent.transform.SetPosition(Vec3f(_r.NextRanged(500)+100, _r.NextRanged(500)+100, 0.0f));
+        ent.word_of_our_sponsor = "Raid SHADOW LEGENDS";
+        server_CreateEntity(ent);
 
         //Entity@ ent = server_CreateEntity(1);
     }
@@ -67,28 +69,43 @@ class TemplateEntity : Entity
 
 class TemplateEntityLOL : Entity
 {
+    net_string word_of_our_sponsor;
+    
     TemplateEntityLOL()
     {
         name = "template but red";
         type = 2;
-    }
-
-    void Tick()
-    {
-        Entity::Tick();
-        //if(!isServer()) return;
-        Vec3f pos = transform.position;
-        pos.y += 5.0f;
-        if(pos.y > 500.0f)
-        {
-            pos.y = 100.0f;
-        }
-        SetPosition(pos);
+        word_of_our_sponsor = "none";
     }
     
     void Render()
     {
         Vec2f pos = Vec2f_lerp(Vec2f(transform.old_position.x, transform.old_position.y), Vec2f(transform.position.x, transform.position.y), render_delta);
-        GUI::DrawRectangle(pos, pos+Vec2f(100,100), SColor(255,255,0,0));
+        GUI::DrawRectangle(pos, pos+Vec2f(100,20), SColor(255,255,0,0));
+        GUI::DrawText(word_of_our_sponsor.value, pos, color_white);
+    }
+
+    void SendCreate(CBitStream@ stream)
+    {
+        Entity::SendCreate(stream);
+        word_of_our_sponsor.WriteCreate(stream);
+    }
+
+    void CreateFromData(CBitStream@ stream)
+    {
+        Entity::CreateFromData(stream);
+        word_of_our_sponsor.ReadCreate(stream);
+    }
+
+    void SendDelta(CBitStream@ stream)
+    {
+        Entity::SendDelta(stream);
+        word_of_our_sponsor.WriteDelta(stream);
+    }
+
+    void ReadDelta(CBitStream@ stream)
+    {
+        Entity::ReadDelta(stream);
+        word_of_our_sponsor.ReadDelta(stream);
     }
 }
