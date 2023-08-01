@@ -157,6 +157,9 @@ class Game
                 Entity@ ent = CreateEntityFromType(type);
                 ent.CreateFromData(stream);
                 @entities[id] = @ent;
+                // if entity is created in delta update, then that means that entity was just created
+                // unlike in CreateFromData, where we dont know if it was just created or we are just joined
+                ent.Init();
             }
             else // just update then
             {
@@ -187,6 +190,7 @@ class Game
                 @entities[i] = @entity;
                 entity.id = i; // woops haha i forgor :)
                 entity.just_created = true;
+                entity.Init();
                 added = true;
                 print("entity "+entity.name+" created");
                 break;
@@ -215,6 +219,7 @@ class Game
                 @entities[i] = @ent;
                 ent.id = i;
                 ent.just_created = true;
+                ent.Init();
                 added = true;
                 print("entity "+ent.name+" created");
                 break;
