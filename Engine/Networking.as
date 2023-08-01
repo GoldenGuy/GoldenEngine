@@ -82,13 +82,13 @@ class NetVar
     void WriteDelta(CBitStream@ stream)
     {
         if(should_write(stream))
-            WriteCreate(stream);
+            Write(stream);
     }
 
     void ReadDelta(CBitStream@ stream)
     {
         if(should_read(stream))
-            ReadCreate(stream);
+            Read(stream);
     }
 }
 
