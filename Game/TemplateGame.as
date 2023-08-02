@@ -9,16 +9,31 @@ class TemplateGame : Game
         Random _r(Time_Local());
 
         // create 10 template entities
-        for(int i = 0; i < 10; i++)
+        for(int i = 0; i < 5; i++)
         {
             Entity@ ent = server_CreateEntity(1);
             ent.transform.SetPosition(Vec3f(_r.NextRanged(500)+100, _r.NextRanged(500)+100, 0.0f));
         }
+    }
 
-        TemplateEntityLOL@ ent = TemplateEntityLOL();
-        ent.transform.SetPosition(Vec3f(_r.NextRanged(500)+100, _r.NextRanged(500)+100, 0.0f));
-        ent.word_of_our_sponsor = "Raid SHADOW LEGENDS";
-        server_CreateEntity(ent);
+    void Tick()
+    {
+        Game::Tick();
+
+        if(isClient())
+        {
+            CControls@ controls = getControls();
+            if(controls != null)
+            {
+                if(controls.isKeyJustPressed(KEY_RBUTTON))
+                {
+                    CBitStream stream;
+                    stream.write_Vec2f(controls.getMouseScreenPos());
+                    getRules().SendCommand(GameCommands::c_create_entity, stream, false);
+                }
+                
+            }
+        }
     }
 
     Entity@ CreateEntityFromType(u16 type)
@@ -29,11 +44,26 @@ class TemplateGame : Game
                 return Entity();
             case 1:
                 return TemplateEntity();
-            case 2:
-                return TemplateEntityLOL();
         }
 
         return null;
+    }
+
+    void ProcessCommand( uint cmd, CBitStream@ stream )
+    {
+        if(isServer())
+        {
+            switch(cmd) 
+            {
+                case GameCommands::c_create_entity:
+                {
+                    TemplateEntity@ ent = TemplateEntity();
+                    Vec2f pos = stream.read_Vec2f();
+                    ent.transform.SetPosition(Vec3f(pos.x, pos.y, 0.0f));
+                    server_CreateEntity(ent);
+                }
+            }
+        }
     }
 }
 
@@ -43,6 +73,11 @@ class TemplateEntity : Entity
     {
         name = "template";
         type = 1;
+    }
+
+    void Init()
+    {
+        print("bomba");
     }
 
     void Tick()
@@ -65,45 +100,10 @@ class TemplateEntity : Entity
     }
 }
 
-class TemplateEntityLOL : Entity
+namespace GameCommands
 {
-    net_string word_of_our_sponsor;
-    
-    TemplateEntityLOL()
+    enum cmds
     {
-        name = "template but red";
-        type = 2;
-        word_of_our_sponsor = "none";
-    }
-    
-    void Render()
-    {
-        Vec2f pos = Vec2f_lerp(Vec2f(transform.old_position.x, transform.old_position.y), Vec2f(transform.position.x, transform.position.y), render_delta);
-        GUI::DrawRectangle(pos, pos+Vec2f(100,20), SColor(255,255,0,0));
-        GUI::DrawText(word_of_our_sponsor.v, pos, color_white);
-    }
-
-    void SendCreate(CBitStream@ stream)
-    {
-        Entity::SendCreate(stream);
-        word_of_our_sponsor.Write(stream);
-    }
-
-    void CreateFromData(CBitStream@ stream)
-    {
-        Entity::CreateFromData(stream);
-        word_of_our_sponsor.Read(stream);
-    }
-
-    void SendDelta(CBitStream@ stream)
-    {
-        Entity::SendDelta(stream);
-        word_of_our_sponsor.WriteDelta(stream);
-    }
-
-    void ReadDelta(CBitStream@ stream)
-    {
-        Entity::ReadDelta(stream);
-        word_of_our_sponsor.ReadDelta(stream);
+        c_create_entity = 100,
     }
 }
