@@ -28,7 +28,7 @@ class Entity
 
 	void Tick()
 	{
-		transform.UpdateOld();
+		//transform.UpdateOld();
 	}
 
 	void Render()
@@ -145,6 +145,8 @@ class EntityManager
 				//entities[i].just_created = false;
 				entities[i].Init();
 			}*/
+
+			entities[i].transform.UpdateOld();
 			
 			entities[i].Tick();
 		}

@@ -3,7 +3,6 @@ class Game
 {
 	Camera camera;
 	EntityManager entities;
-	//bool initialized = false;
 
 	Game()
 	{
@@ -22,8 +21,6 @@ class Game
 		// init runs on server only, client will only get create command
 		Entity@ ent = BoxEntity();
 		entities.Add(ent);
-
-		//initialized = true;
 	}
 
 	void Tick()
@@ -49,7 +46,6 @@ class Game
 	void CreateFromData(CBitStream@ stream)
 	{
 		entities.CreateEntities(stream);
-		//initialized = true;
 		Print("Game created", PrintColor::GRN);
 		game_created = true;
 	}
@@ -57,68 +53,11 @@ class Game
 	void SendDelta(CBitStream@ stream)
 	{
 		entities.SendDelta(stream);
-		// runs every tick, send only data that is changed!!!
-		// (i think for better design entities should be sent after all the net vars, so do "super" after)
-
-		/*uint index = stream.getBitIndex();
-		stream.write_u8(0);
-		u8 ents = 0;
-		for(int i = 0; i < MAX_ENTITIES; i++)
-		{
-			if(entities[i] == null)
-				continue;
-			
-			if(entities[i].just_created) // if just created
-			{
-				stream.write_bool(true); // create or update
-				stream.write_u8(i);
-				stream.write_u16(entities[i].type);
-				entities[i].SendCreate(stream);
-				entities[i].net_update = false;
-				entities[i].just_created = false;
-				ents++;
-			}
-			else if(entities[i].net_update) // if it was changed
-			{
-				stream.write_bool(false);
-				stream.write_u8(i);
-				entities[i].SendDelta(stream);
-				entities[i].net_update = false;
-				ents++;
-			}
-		}
-		stream.overwrite_at_bit_u8(index, ents);*/
 	}
 
 	void ReadDelta(CBitStream@ stream)
 	{
 		entities.ReadDelta(stream);
-		/*u8 ents = stream.read_u8();
-		for(int i = 0; i < ents; i++)
-		{
-			bool create_or_update = stream.read_bool();
-			u8 id = stream.read_u8();
-			if(create_or_update) // if true, then create
-			{
-				u16 type = stream.read_u16();
-				Entity@ ent = CreateEntityFromType(type);
-				ent.CreateFromData(stream);
-				@entities[id] = @ent;
-				// if entity is created in delta update, then that means that entity was just created
-				// unlike in CreateFromData, where we dont know if it was just created or we are just joined
-				ent.Init();
-			}
-			else // just update then
-			{
-				Entity@ ent = entities[id];
-				if(ent == null)
-				{
-					Print("entity not found id: "+id, PrintColor::RED);
-					return;
-				}
-				ent.ReadDelta(stream);
-			}
-		}*/
 	}
 
 	/*Entity@ server_CreateEntity(u16 type)
@@ -207,8 +146,6 @@ class BoxEntity : Entity
 
 	void Tick()
 	{
-		Entity::Tick();
-		//if(!isServer()) return;
 		Vec3f pos = transform.position;
 		pos.y += 5.0f;
 		if(pos.y > 500.0f)

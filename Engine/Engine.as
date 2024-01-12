@@ -13,11 +13,12 @@
 
 Game@ game = Game();
 
-bool localhost = false;
 float render_delta = 0.0f;
+
+bool localhost = false;
 bool game_created = false;
 bool asked = false;
-const u8 MAX_ENTITIES = 255; // for test, will increase if needed
+//const u8 MAX_ENTITIES = 255; // for test, will increase if needed
 
 void onInit(CRules@ this)
 {
