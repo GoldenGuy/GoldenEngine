@@ -18,7 +18,7 @@ class Entity
 
 	Entity()
 	{
-		id = generateUniqueId();
+		if(isServer()) id = generateUniqueId();
 	}
 
 	void Init() // i actually dont know when to call this, and if its even needed
@@ -163,9 +163,10 @@ class EntityManager
 		stream.write_u16(entities.size());
 		for(int i = 0; i < entities.size(); i++)
 		{
-			stream.write_u16(entities[i].id);
-			stream.write_u16(entities[i].type);
-			entities[i].SendCreate(stream);
+			Entity@ ent = entities[i];
+			stream.write_u16(ent.id);
+			stream.write_u16(ent.type);
+			ent.SendCreate(stream);
 		}
 	}
 
@@ -180,6 +181,69 @@ class EntityManager
 			ent.CreateFromData(stream);
 			Add(ent);
 			//@entities[id] = @ent;
+		}
+	}
+
+	void SendDelta(CBitStream@ stream)
+	{
+		stream.write_u16(entities.size());
+		for(int i = 0; i < entities.size(); i++)
+		{
+			Entity@ ent = entities[i];
+			
+			if(entities[i].just_created) // if just created
+			{
+				stream.write_bool(true); // create
+				stream.write_u16(i);
+				stream.write_u16(entities[i].type);
+				entities[i].SendCreate(stream);
+				entities[i].net_update = false;
+				entities[i].just_created = false;
+			}
+			else if(entities[i].net_update) // if it was changed
+			{
+				stream.write_bool(false); // update
+				stream.write_u16(i);
+				entities[i].SendDelta(stream);
+				entities[i].net_update = false;
+			}
+		}
+	}
+
+	void ReadDelta(CBitStream@ stream)
+	{
+		u16 amount = stream.read_u16();
+		for(int i = 0; i < amount; i++)
+		{
+			bool create_or_update = stream.read_bool();
+			u16 id = stream.read_u16();
+			if(create_or_update) // if true, then create
+			{
+				if(this.exists(id))
+				{
+					Print("entity with id: "+id+" already existed, deleting it...", PrintColor::RED);
+					Remove(id);
+				}
+				u16 type = stream.read_u16();
+				Entity@ ent = game.CreateEntityFromType(type);
+				ent.id = id;
+				ent.CreateFromData(stream);
+				this.Add(ent);
+				//@entities[id] = @ent;
+				// if entity is created in delta update, then that means that entity was just created
+				// unlike in CreateFromData, where we dont know if it was just created or we are just joined
+				ent.Init();
+			}
+			else // just update then
+			{
+				Entity@ ent = this.get(id);//entities[id];
+				if(ent == null)
+				{
+					Print("entity not found id: "+id, PrintColor::RED);
+					return; //mwahahahahahah
+				}
+				ent.ReadDelta(stream);
+			}
 		}
 	}
 }

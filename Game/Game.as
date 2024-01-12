@@ -2,15 +2,12 @@
 class Game
 {
 	Camera camera;
-	//Entity@[] entities(MAX_ENTITIES, null);
 	EntityManager entities;
-	bool initialized = false;
+	//bool initialized = false;
 
 	Game()
 	{
 		camera = Camera();
-		//Entity@[] _entities(MAX_ENTITIES, null);
-		//entities = _entities;
 		entities = EntityManager();
 	}
 
@@ -23,43 +20,20 @@ class Game
 	void Init()
 	{
 		// init runs on server only, client will only get create command
-		
+		Entity@ ent = BoxEntity();
+		entities.Add(ent);
+
+		//initialized = true;
 	}
 
 	void Tick()
 	{
 		entities.Tick();
-		/*for(int i = 0; i < MAX_ENTITIES; i++)
-		{
-			if(entities[i] == null)
-				continue;
-			
-			if(entities[i].dead)
-			{
-				@entities[i] = null;
-				continue;
-			}*/
-
-			/*if(entities[i].just_created)
-			{
-				//entities[i].just_created = false;
-				entities[i].Init();
-			}*/
-			
-			//entities[i].Tick();
-		//}
 	}
 
 	void Render()
 	{
 		entities.Render();
-		/*for(int i = 0; i < MAX_ENTITIES; i++)
-		{
-			if(entities[i] == null)
-				continue;
-
-			entities[i].Render();
-		}*/
 	}
 
 	void ProcessCommand( uint cmd, CBitStream@ stream )
@@ -70,40 +44,19 @@ class Game
 	void SendCreate(CBitStream@ stream)
 	{
 		entities.SendCreateEntities(stream);
-		// only runs when new player joins, or in situations when you need to change "map"
-		/*uint index = stream.getBitIndex();
-		stream.write_u8(0);
-		u8 ents = 0;
-		for(int i = 0; i < MAX_ENTITIES; i++)
-		{
-			if(entities[i] == null)
-				continue;
-			
-			stream.write_u8(i);
-			stream.write_u16(entities[i].type);
-			entities[i].SendCreate(stream);
-			ents++;
-		}
-		stream.overwrite_at_bit_u8(index, ents);*/
 	}
 
 	void CreateFromData(CBitStream@ stream)
 	{
 		entities.CreateEntities(stream);
-		/*u8 ents = stream.read_u8();
-		for(int i = 0; i < ents; i++)
-		{
-			u8 id = stream.read_u8();
-			u16 type = stream.read_u16();
-			Entity@ ent = CreateEntityFromType(type);
-			ent.CreateFromData(stream);
-			@entities[id] = @ent;
-		}*/
+		//initialized = true;
+		Print("Game created", PrintColor::GRN);
 		game_created = true;
 	}
 
 	void SendDelta(CBitStream@ stream)
 	{
+		entities.SendDelta(stream);
 		// runs every tick, send only data that is changed!!!
 		// (i think for better design entities should be sent after all the net vars, so do "super" after)
 
@@ -139,6 +92,7 @@ class Game
 
 	void ReadDelta(CBitStream@ stream)
 	{
+		entities.ReadDelta(stream);
 		/*u8 ents = stream.read_u8();
 		for(int i = 0; i < ents; i++)
 		{
@@ -229,17 +183,45 @@ class Game
 	Entity@ CreateEntityFromType(u16 type)
 	{
 		// Example
-		/*switch(type)
+		switch(type)
 		{
 			case 0:
 				return Entity();
-			case MyGame::box_entity:
+			case 1:
 				return BoxEntity();
-			case MyGame::player_entity:
-				return PlayerEntity();
-		}*/
+			//case 2:
+			//	return PlayerEntity();
+		}
 
 		return null;
+	}
+}
+
+class BoxEntity : Entity
+{
+	BoxEntity()
+	{
+		super();
+		type = 1;
+	}
+
+	void Tick()
+	{
+		Entity::Tick();
+		//if(!isServer()) return;
+		Vec3f pos = transform.position;
+		pos.y += 5.0f;
+		if(pos.y > 500.0f)
+		{
+			pos.y = 100.0f;
+		}
+		SetPosition(pos);
+	}
+	
+	void Render()
+	{
+		Vec2f pos = Vec2f_lerp(Vec2f(transform.old_position.x, transform.old_position.y), Vec2f(transform.position.x, transform.position.y), render_delta);
+		GUI::DrawRectangle(pos, pos+Vec2f(100,100));
 	}
 }
 

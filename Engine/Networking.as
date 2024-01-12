@@ -47,7 +47,8 @@ void onCommand( CRules@ this, u8 cmd, CBitStream@ params )
 
             case NetCommands::s_send_delta:
             {
-                if(!game_created)
+                
+				if(!game_created)
                     return;
                 game.ReadDelta(params);
                 return;

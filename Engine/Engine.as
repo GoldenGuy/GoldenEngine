@@ -111,6 +111,7 @@ void onTick(CRules@ this)
 				if(player != null)
 				{
 					this.SendCommand(NetCommands::s_send_game, stream, player);
+					Print("Sent game to "+player.getUsername(), PrintColor::YLW);
 				}
 			}
 			new_players.clear();
