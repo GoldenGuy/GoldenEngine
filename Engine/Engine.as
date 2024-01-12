@@ -4,18 +4,20 @@
 
 #include "Networking.as"
 
-#include "Game.as"
-//#include "Scene.as"
 #include "Entity.as"
 #include "Camera.as"
 
+#include "Game.as" // IMPORTANT
+
 #include "DefaultModels.as"
 
+Game@ game = Game();
 
 bool localhost = false;
 float render_delta = 0.0f;
 bool game_created = false;
 bool asked = false;
+const u8 MAX_ENTITIES = 255; // for test, will increase if needed
 
 void onInit(CRules@ this)
 {
@@ -25,17 +27,17 @@ void onInit(CRules@ this)
 
 		if(isServer())
 		{
-			Print("LocalHost Engine Init", PrintColor::YLW);
+			Print("---LocalHost Engine Init---", PrintColor::GRN);
 			localhost = true;
 		}
 		else
 		{
-			Print("Client Engine Init", PrintColor::YLW);
+			Print("---Client Engine Init---", PrintColor::GRN);
 		}
 	}
 	else
 	{
-		Print("Server Engine Init", PrintColor::YLW);
+		Print("---Server Engine Init---", PrintColor::GRN);
 		server_CreateBlob("blob"); // need this to avoid that "Connecting..." message bs
 	}
 	onReload(this);
@@ -125,7 +127,7 @@ void Render(int id)
 {
 	if(game is null)
 	{
-		Print("Game not initialized", PrintColor::RED);
+		Print("Render: Game not initialized", PrintColor::RED);
 	}
 	else
 	{

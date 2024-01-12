@@ -8,6 +8,7 @@ namespace NetCommands
 		// server commands
         s_send_game = 64,
 		s_send_delta,
+		s_remove_entity,
 
         // client commands
         c_need_game,
@@ -49,6 +50,17 @@ void onCommand( CRules@ this, u8 cmd, CBitStream@ params )
                 if(!game_created)
                     return;
                 game.ReadDelta(params);
+                return;
+            }
+            break;
+
+			case NetCommands::s_remove_entity:
+            {
+                if(!game_created)
+                    return;
+				u16 id;
+				if (!params.saferead_u16(id)) return;
+                game.entities.Remove(id);
                 return;
             }
             break;
