@@ -41,6 +41,8 @@ void onCommand( CRules@ this, u8 cmd, CBitStream@ params )
 			case NetCommands::s_send_game:
 			{
 				game.CreateFromData(params);
+				Print("Game created", PrintColor::GRN);
+				game_created = true;
 				return;
 			}
 			break;

@@ -25,7 +25,18 @@ void onInit(CRules@ this)
 	if(isClient())
 	{
 		this.set_s32("render_id", -1);
+	}
+	if(isServer())
+	{
+		server_CreateBlob("blob"); // need this to avoid that "Connecting..." message bs
+	}
+	onReload(this);
+}
 
+void onReload(CRules@ this) // in case you use rebuild, since onInit wont run again
+{
+	if(isClient())
+	{
 		if(isServer())
 		{
 			Print("---LocalHost Engine Init---", PrintColor::GRN);
@@ -35,21 +46,13 @@ void onInit(CRules@ this)
 		{
 			Print("---Client Engine Init---", PrintColor::GRN);
 		}
-	}
-	else
-	{
-		Print("---Server Engine Init---", PrintColor::GRN);
-		server_CreateBlob("blob"); // need this to avoid that "Connecting..." message bs
-	}
-	onReload(this);
-}
 
-void onReload(CRules@ this) // in case you use rebuild, since onInit wont run again
-{
-	if(isClient()) // remove old render script
-	{
 		int id = this.get_s32("render_id");
 		if(id != -1) Render::RemoveScript(id);
+	}
+	else if(isServer())
+	{
+		Print("---Server Engine Init---", PrintColor::GRN);
 	}
 
 	// game init
@@ -63,14 +66,14 @@ void onReload(CRules@ this) // in case you use rebuild, since onInit wont run ag
 		Print("[" + getGameTime() + "]" + "Game Init", PrintColor::GRN);
 		game.Init();
 	}
-	else
+	else // if not server means not localhost too
 	{
 		Print("[" + getGameTime() + "]" + "Waiting for game...", PrintColor::GRY);
 		game_created = false;
 	}
 	// end game init
 
-	if(isClient()) // create new render script
+	if(isClient()) // create new render script, at the end of everything to not cause null error cuz game not created yet 
 	{
 		int id = Render::addScript(Render::layer_background, getCurrentScriptName(), "Render", 0);
 		this.set_s32("render_id", id);

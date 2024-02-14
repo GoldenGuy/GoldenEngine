@@ -19,13 +19,24 @@ class Game
 	void Init()
 	{
 		// init runs on server only, client will only get create command
-		Entity@ ent = BoxEntity();
-		entities.Add(ent);
+		/*for(int i = 0; i < 10; i++)
+		{
+			Entity@ ent = BoxEntity();
+			ent.SetPosition(Vec3f(XORRandom(255), XORRandom(255), 0));
+			entities.Add(ent);
+		}*/
 	}
 
 	void Tick()
 	{
 		entities.Tick();
+
+		if(isServer() && getGameTime() % 200 == 0)
+		{
+			Entity@ ent = BoxEntity();
+			ent.SetPosition(Vec3f(XORRandom(255), XORRandom(255), 0));
+			entities.Add(ent);
+		}
 	}
 
 	void Render()
@@ -46,8 +57,6 @@ class Game
 	void CreateFromData(CBitStream@ stream)
 	{
 		entities.CreateEntities(stream);
-		Print("Game created", PrintColor::GRN);
-		game_created = true;
 	}
 
 	void SendDelta(CBitStream@ stream)
@@ -140,7 +149,7 @@ class BoxEntity : Entity
 {
 	BoxEntity()
 	{
-		super();
+		super(); // dont forget!
 		type = 1;
 	}
 

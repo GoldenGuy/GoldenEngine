@@ -75,6 +75,11 @@ class EntityManager
 	private Entity@[] entities;
 	private dictionary entity_map;
 
+	EntityManager()
+	{
+		getRules().set_u16("_id", 0);
+	}
+
 	void Add(Entity@ entity)
 	{
 		if (exists(entity.id))
@@ -82,6 +87,8 @@ class EntityManager
 			error("Attempted to add an entity with an existing ID: " + entity.id);
 			return;
 		}
+
+		entity.just_created = true;
 
 		entities.push_back(entity);
 		entity_map.set("" + entity.id, @entity);
@@ -180,6 +187,7 @@ class EntityManager
 			u16 id = stream.read_u16();
 			u16 type = stream.read_u16();
 			Entity@ ent = game.CreateEntityFromType(type);
+			ent.id = id;
 			ent.CreateFromData(stream);
 			Add(ent);
 			//@entities[id] = @ent;
@@ -193,21 +201,21 @@ class EntityManager
 		{
 			Entity@ ent = entities[i];
 			
-			if(entities[i].just_created) // if just created
+			if(ent.just_created) // if just created
 			{
 				stream.write_bool(true); // create
-				stream.write_u16(i);
-				stream.write_u16(entities[i].type);
-				entities[i].SendCreate(stream);
-				entities[i].net_update = false;
-				entities[i].just_created = false;
+				stream.write_u16(ent.id);
+				stream.write_u16(ent.type);
+				ent.SendCreate(stream);
+				ent.net_update = false;
+				ent.just_created = false;
 			}
-			else if(entities[i].net_update) // if it was changed
+			else if(ent.net_update) // if it was changed
 			{
 				stream.write_bool(false); // update
-				stream.write_u16(i);
-				entities[i].SendDelta(stream);
-				entities[i].net_update = false;
+				stream.write_u16(ent.id);
+				ent.SendDelta(stream);
+				ent.net_update = false;
 			}
 		}
 	}
