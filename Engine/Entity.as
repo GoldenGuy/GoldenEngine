@@ -1,25 +1,16 @@
 
 class Entity
 {
-	//Scene@ scene;
 	u16 id = 0;
 	uint player_netid = -1;
 	u16 type = 0;
 	string name = "none";
-	Transform transform = Transform();
+	//Transform transform = Transform();
 	bool dead = false;
-	bool net_update = false;
-	bool just_created = false;
+	//bool net_update = false;
+	uint just_created = 0;
 
-	/*void SetScene(Scene@ scene)
-	{
-		@scene = @scene;
-	}*/
-
-	Entity()
-	{
-		if(isServer()) id = generateUniqueId();
-	}
+	Entity(){}
 
 	void Init() // i actually dont know when to call this, and if its even needed
 	{
@@ -38,30 +29,30 @@ class Entity
 
 	void SetPosition(Vec3f pos)
 	{
-		transform.SetPosition(pos);
-		net_update = true;
+		//transform.SetPosition(pos);
+		//net_update = true;
 	}
 
-	void SendCreate(CBitStream@ stream)
+	void SendEntity(CBitStream@ stream)
 	{
 		stream.write_string(name);
-		transform.SendCreate(stream);
+		//transform.SendCreate(stream);
 	}
 
-	void CreateFromData(CBitStream@ stream)
+	void CreateEntity(CBitStream@ stream)
 	{
 		name = stream.read_string();
-		transform.CreateFromData(stream);
+		//transform.CreateFromData(stream);
 	}
 
-	void SendDelta(CBitStream@ stream) // every tick
+	void SendUpdate(CBitStream@ stream) // every tick
 	{
-		transform.SendDelta(stream);
+		//transform.SendDelta(stream);
 	}
 
-	void ReadDelta(CBitStream@ stream)
+	void ReadUpdate(CBitStream@ stream)
 	{
-		transform.ReadDelta(stream);
+		//transform.ReadDelta(stream);
 	}
 
 	void Destroy()
@@ -75,25 +66,36 @@ class EntityManager
 	private Entity@[] entities;
 	private dictionary entity_map;
 
-	EntityManager()
-	{
-		getRules().set_u16("_id", 0);
-	}
+	private u16 id = 0;
+
+	EntityManager(){}
 
 	void Add(Entity@ entity)
 	{
+		if (isServer())
+		{
+			if(entity.id == 0)
+			{
+				entity.id = generateUniqueId();
+				entity.just_created = getGameTime();
+			}
+		}
+		
 		if (exists(entity.id))
 		{
 			error("Attempted to add an entity with an existing ID: " + entity.id);
 			return;
 		}
 
-		entity.just_created = true;
-
 		entities.push_back(entity);
 		entity_map.set("" + entity.id, @entity);
 
 		print("Added entity: " + entity.id);
+
+		if (entity.just_created == getGameTime())
+		{
+			entity.Init();
+		}
 	}
 
 	void Remove(u16 id)
@@ -137,23 +139,12 @@ class EntityManager
 	{
 		for(int i = 0; i < entities.size(); i++)
 		{
-			//if(entities[i] == null)
-			//	continue;
-			
 			if(entities[i].dead)
 			{
 				Remove(entities[i].id);
 				i--;
 				continue;
 			}
-
-			/*if(entities[i].just_created)
-			{
-				//entities[i].just_created = false;
-				entities[i].Init();
-			}*/
-
-			entities[i].transform.UpdateOld();
 			
 			entities[i].Tick();
 		}
@@ -167,15 +158,16 @@ class EntityManager
 		}
 	}
 
-	void SendCreateEntities(CBitStream@ stream)
+	void SendEntities(CBitStream@ stream)
 	{
 		stream.write_u16(entities.size());
 		for(int i = 0; i < entities.size(); i++)
 		{
 			Entity@ ent = entities[i];
+			stream.write_bool(ent.just_created == getGameTime()); // should init or not
 			stream.write_u16(ent.id);
 			stream.write_u16(ent.type);
-			ent.SendCreate(stream);
+			ent.SendEntity(stream);
 		}
 	}
 
@@ -184,43 +176,41 @@ class EntityManager
 		u16 amount = stream.read_u16();
 		for(int i = 0; i < amount; i++)
 		{
+			bool init = stream.read_bool();
 			u16 id = stream.read_u16();
 			u16 type = stream.read_u16();
 			Entity@ ent = game.CreateEntityFromType(type);
+			ent.just_created = init ? getGameTime() : 0;
 			ent.id = id;
-			ent.CreateFromData(stream);
+			ent.CreateEntity(stream);
 			Add(ent);
-			//@entities[id] = @ent;
 		}
 	}
 
-	void SendDelta(CBitStream@ stream)
+	void SendUpdate(CBitStream@ stream)
 	{
 		stream.write_u16(entities.size());
 		for(int i = 0; i < entities.size(); i++)
 		{
 			Entity@ ent = entities[i];
+
+			bool create_or_update = ent.just_created == getGameTime();
+			stream.write_bool(create_or_update);
+			stream.write_u16(ent.id);
 			
-			if(ent.just_created) // if just created
+			if(create_or_update) // if just created
 			{
-				stream.write_bool(true); // create
-				stream.write_u16(ent.id);
 				stream.write_u16(ent.type);
-				ent.SendCreate(stream);
-				ent.net_update = false;
-				ent.just_created = false;
+				ent.SendEntity(stream);
 			}
-			else if(ent.net_update) // if it was changed
+			else// if(ent.net_update) // if it was changed
 			{
-				stream.write_bool(false); // update
-				stream.write_u16(ent.id);
-				ent.SendDelta(stream);
-				ent.net_update = false;
+				ent.SendUpdate(stream);
 			}
 		}
 	}
 
-	void ReadDelta(CBitStream@ stream)
+	void ReadUpdate(CBitStream@ stream)
 	{
 		u16 amount = stream.read_u16();
 		for(int i = 0; i < amount; i++)
@@ -237,35 +227,31 @@ class EntityManager
 				u16 type = stream.read_u16();
 				Entity@ ent = game.CreateEntityFromType(type);
 				ent.id = id;
-				ent.CreateFromData(stream);
+				ent.just_created = getGameTime();
+				ent.CreateEntity(stream);
 				this.Add(ent);
-				//@entities[id] = @ent;
-				// if entity is created in delta update, then that means that entity was just created
-				// unlike in CreateFromData, where we dont know if it was just created or we are just joined
-				ent.Init();
 			}
 			else // just update then
 			{
-				Entity@ ent = this.get(id);//entities[id];
+				Entity@ ent = this.get(id);
 				if(ent == null)
 				{
 					Print("entity not found id: "+id, PrintColor::RED);
 					return; //mwahahahahahah
 				}
-				ent.ReadDelta(stream);
+				ent.ReadUpdate(stream);
 			}
 		}
 	}
+
+	private u16 generateUniqueId()
+	{
+		// 0 is reserved for uninitialized entities
+		// Does not account for ID collisions when it wraps around
+		// Surely by then, older entities will no longer exist
+
+		id = id == 65535 ? 1 : id + 1;
+		return id;
+	}
 }
 
-shared u16 generateUniqueId()
-{
-	// 0 is reserved for uninitialized entities
-	// Does not account for ID collisions when it wraps around
-	// Surely by then, older entities will no longer exist
-
-	u16 id = getRules().get_u16("_id");
-	id = id == 65535 ? 1 : id + 1;
-	getRules().set_u16("_id", id);
-	return id;
-}

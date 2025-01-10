@@ -7,11 +7,11 @@ namespace NetCommands
 	{
 		// server commands
 		s_send_game = 64,
-		s_send_delta,
+		s_send_game_update,
 		s_remove_entity,
 
 		// client commands
-		c_need_game,
+		c_request_game,
 	}
 }
 
@@ -23,7 +23,7 @@ void onCommand( CRules@ this, u8 cmd, CBitStream@ params )
 	{
 		switch(cmd)
 		{
-			case NetCommands::c_need_game:
+			case NetCommands::c_request_game:
 			{
 				uint16 netid = params.read_u16();
 				//getPlayerByNetworkId(netid);
@@ -40,19 +40,19 @@ void onCommand( CRules@ this, u8 cmd, CBitStream@ params )
 		{
 			case NetCommands::s_send_game:
 			{
-				game.CreateFromData(params);
+				game.CreateGame(params);
 				Print("Game created", PrintColor::GRN);
 				game_created = true;
 				return;
 			}
 			break;
 
-			case NetCommands::s_send_delta:
+			case NetCommands::s_send_game_update:
 			{
 				
 				if(!game_created)
 					return;
-				game.ReadDelta(params);
+				game.ReadUpdate(params);
 				return;
 			}
 			break;

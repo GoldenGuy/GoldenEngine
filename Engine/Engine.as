@@ -7,11 +7,13 @@
 #include "Entity.as"
 #include "Camera.as"
 
-#include "Game.as" // IMPORTANT
+#include "Game.as"
 
-#include "DefaultModels.as"
+#include "Main.as" // IMPORTANT
 
-Game@ game = Game();
+//#include "DefaultModels.as"
+
+Game@ game;
 
 float render_delta = 0.0f;
 
@@ -37,6 +39,9 @@ void onInit(CRules@ this)
 
 void onReload(CRules@ this) // in case you use rebuild, since onInit wont run again
 {
+	Game@ _game = StartGame();
+	@game = @_game;
+	
 	if(isClient())
 	{
 		if(isServer())
@@ -95,7 +100,7 @@ void onTick(CRules@ this)
 			// tell server that we are ready to start
 			CBitStream stream;
 			stream.write_netid(my_player.getNetworkID());
-			this.SendCommand(NetCommands::c_need_game, stream, false);
+			this.SendCommand(NetCommands::c_request_game, stream, false);
 			asked = true;
 		}
 	}
@@ -110,7 +115,7 @@ void onTick(CRules@ this)
 		if(new_players.size() > 0)
 		{
 			CBitStream stream;
-			game.SendCreate(stream);
+			game.SendGame(stream);
 			for(int i = 0; i < new_players.size(); i++)
 			{
 				uint16 netid = new_players[i];
@@ -126,8 +131,8 @@ void onTick(CRules@ this)
 
 		// send deltas
 		CBitStream stream;
-		game.SendDelta(stream);
-		this.SendCommand(NetCommands::s_send_delta, stream, true);
+		game.SendUpdate(stream);
+		this.SendCommand(NetCommands::s_send_game_update, stream, true);
 	}
 }
 
