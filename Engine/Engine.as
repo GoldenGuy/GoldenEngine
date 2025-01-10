@@ -26,11 +26,13 @@ void onInit(CRules@ this)
 	{
 		this.set_s32("render_id", -1);
 	}
+
+	//onReload(this); // has to happend before creating blob cuz of the fucky getCurrentScriptName() function
+
 	if(isServer())
 	{
 		server_CreateBlob("blob"); // need this to avoid that "Connecting..." message bs
 	}
-	onReload(this);
 }
 
 void onReload(CRules@ this) // in case you use rebuild, since onInit wont run again
@@ -75,6 +77,7 @@ void onReload(CRules@ this) // in case you use rebuild, since onInit wont run ag
 
 	if(isClient()) // create new render script, at the end of everything to not cause null error cuz game not created yet 
 	{
+		//Print("Current script: \"" + getCurrentScriptName() + "\"", PrintColor::YLW);
 		int id = Render::addScript(Render::layer_background, getCurrentScriptName(), "Render", 0);
 		this.set_s32("render_id", id);
 	}
