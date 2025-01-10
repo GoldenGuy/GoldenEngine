@@ -27,7 +27,7 @@ void onInit(CRules@ this)
 		this.set_s32("render_id", -1);
 	}
 
-	//onReload(this); // has to happend before creating blob cuz of the fucky getCurrentScriptName() function
+	onReload(this); // has to happend before creating blob cuz of the fucky getCurrentScriptName() function
 
 	if(isServer())
 	{
