@@ -59,6 +59,11 @@ class Entity
 	{
 		dead = true;
 	}
+
+	Entity@ Copy()
+	{
+		return @Entity();
+	}
 }
 
 class EntityManager
@@ -133,6 +138,11 @@ class EntityManager
 		Entity@ entity;
 		entity_map.get("" + id, @entity);
 		return entity;
+	}
+
+	Entity@[]@ getAllEntities()
+	{
+		return @entities;
 	}
 
 	void Tick()
