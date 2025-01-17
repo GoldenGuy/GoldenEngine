@@ -13,6 +13,8 @@ class TestGame : Game
 	{
 		super();
 		camera = Camera();
+
+		Texture::createFromFile("hiii", CFileMatcher("default.png").getFirst());
 	}
 
 	void Init()
@@ -22,16 +24,35 @@ class TestGame : Game
 
 	void Tick()
 	{
-		if(isServer() && getGameTime() % 100 == 1)
+		/*if(isServer() && getGameTime() % 100 == 1)
 		{
 			Entity@ ent = TestEntity();
 			entities.Add(ent);
-		}
+		}*/
 	}
 
 	void Render()
 	{
-		
+		ImGui::SetNextWindowPos(Vec2f(getScreenWidth() - 210,10), 1);
+		ImGui::SetNextWindowSize(Vec2f(200, getScreenHeight() - 20), 1);
+		if(ImGui::Begin("Entities", 2 | 4 | 32 | 64 | 256))
+		{
+			Entity@[]@ _entities = entities.getAllEntities();
+			for(int i = 0; i < _entities.size(); i++)
+			{
+				ImGui::Button(_entities[i].name, Vec2f(100, 20));
+				ImGui::SameLine(0.0, 0.0);
+				ImGui::Button("\\/", Vec2f(20, 20));
+				if(ImGui::IsItemHovered())
+				{
+					ImGui::Text("hi");
+					ImGui::Image("hiii");
+				}
+				ImGui::Separator();
+			}
+			
+			ImGui::End();
+		}
 	}
 
 	void ProcessCommand( uint cmd, CBitStream@ stream )
@@ -62,6 +83,31 @@ class TestGame : Game
 	Entity@ CreateEntityFromType(u16 type)
 	{
 		return TestEntity();
+	}
+}
+
+void onNewPlayerJoin(CRules@ this, CPlayer@ player) // add player entity
+{
+	if(isServer())
+	{
+		//Print("ADDING PLAYER "+player.getUsername());
+		Entity@ ent = Entity();
+		ent.player_netid = player.getNetworkID();
+		ent.name = player.getUsername();
+		game.entities.Add(ent);
+	}
+}
+
+void onPlayerLeave(CRules@ this, CPlayer@ player) // remove player entity
+{
+	if(isServer())
+	{
+		//Print("ADDING PLAYER "+player.getUsername());
+		Entity@ ent = game.entities.getPlayerEntity(player.getNetworkID());
+		if(ent !is null)
+		{
+			game.entities.Remove(ent.id);
+		}
 	}
 }
 

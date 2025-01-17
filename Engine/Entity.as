@@ -8,7 +8,7 @@ class Entity
 	//Transform transform = Transform();
 	bool dead = false;
 	//bool net_update = false;
-	uint just_created = 0;
+	bool just_created = false;
 
 	Entity(){}
 
@@ -35,12 +35,14 @@ class Entity
 
 	void SendEntity(CBitStream@ stream)
 	{
+		stream.write_netid(player_netid);
 		stream.write_string(name);
 		//transform.SendCreate(stream);
 	}
 
 	void CreateEntity(CBitStream@ stream)
 	{
+		player_netid = stream.read_netid();
 		name = stream.read_string();
 		//transform.CreateFromData(stream);
 	}
@@ -82,7 +84,7 @@ class EntityManager
 			if(entity.id == 0)
 			{
 				entity.id = generateUniqueId();
-				entity.just_created = getGameTime();
+				entity.just_created = true;
 			}
 		}
 		
@@ -97,7 +99,7 @@ class EntityManager
 
 		print("Added entity: " + entity.id);
 
-		if (entity.just_created == getGameTime())
+		if (entity.just_created)
 		{
 			entity.Init();
 		}
@@ -140,6 +142,19 @@ class EntityManager
 		return entity;
 	}
 
+	Entity@ getPlayerEntity(u16 netid)
+	{
+		Entity@ entity;
+		for (uint i = 0; i < entities.size(); i++)
+		{
+			if (entities[i].player_netid == netid)
+			{
+				@entity = @entities[i];
+			}
+		}
+		return entity;
+	}
+
 	Entity@[]@ getAllEntities()
 	{
 		return @entities;
@@ -170,15 +185,22 @@ class EntityManager
 
 	void SendEntities(CBitStream@ stream)
 	{
-		stream.write_u16(entities.size());
+		uint index = stream.getBitIndex();
+		stream.write_u16(0);
+		u16 true_amount = 0;
 		for(int i = 0; i < entities.size(); i++)
 		{
 			Entity@ ent = entities[i];
-			stream.write_bool(ent.just_created == getGameTime()); // should init or not
-			stream.write_u16(ent.id);
-			stream.write_u16(ent.type);
-			ent.SendEntity(stream);
+			if(!ent.just_created) // dont send new entities, since they will be sent again in update packet
+			{
+				stream.write_bool(false); // should init or not
+				stream.write_u16(ent.id);
+				stream.write_u16(ent.type);
+				ent.SendEntity(stream);
+				true_amount++;
+			}
 		}
+		stream.overwrite_at_bit_u16(index, true_amount);
 	}
 
 	void CreateEntities(CBitStream@ stream)
@@ -190,7 +212,7 @@ class EntityManager
 			u16 id = stream.read_u16();
 			u16 type = stream.read_u16();
 			Entity@ ent = game.CreateEntityFromType(type);
-			ent.just_created = init ? getGameTime() : 0;
+			ent.just_created = init;
 			ent.id = id;
 			ent.CreateEntity(stream);
 			Add(ent);
@@ -204,7 +226,7 @@ class EntityManager
 		{
 			Entity@ ent = entities[i];
 
-			bool create_or_update = ent.just_created == getGameTime();
+			bool create_or_update = ent.just_created;
 			stream.write_bool(create_or_update);
 			stream.write_u16(ent.id);
 			
@@ -212,6 +234,7 @@ class EntityManager
 			{
 				stream.write_u16(ent.type);
 				ent.SendEntity(stream);
+				ent.just_created = false;
 			}
 			else// if(ent.net_update) // if it was changed
 			{
@@ -237,7 +260,7 @@ class EntityManager
 				u16 type = stream.read_u16();
 				Entity@ ent = game.CreateEntityFromType(type);
 				ent.id = id;
-				ent.just_created = getGameTime();
+				ent.just_created = true;
 				ent.CreateEntity(stream);
 				this.Add(ent);
 			}
