@@ -73,6 +73,8 @@ class EntityManager
 	private Entity@[] entities;
 	private dictionary entity_map;
 
+	private u16[] removed_entities;
+
 	private u16 id = 0;
 
 	EntityManager(){}
@@ -118,9 +120,10 @@ class EntityManager
 
 				if (isServer())
 				{
-					CBitStream stream;
+					/*CBitStream stream;
 					stream.write_u16(id);
-					getRules().SendCommand(NetCommands::s_remove_entity, stream, true);
+					getRules().SendCommand(NetCommands::s_remove_entity, stream, true);*/
+					removed_entities.push_back(id);
 				}
 
 				return;
@@ -236,11 +239,21 @@ class EntityManager
 				ent.SendEntity(stream);
 				ent.just_created = false;
 			}
-			else// if(ent.net_update) // if it was changed
+			else // if it was changed
 			{
 				ent.SendUpdate(stream);
 			}
 		}
+
+		if(removed_entities.size() > 0)
+		{
+			stream.write_u16(removed_entities.size());
+			for(int i = 0; i < removed_entities.size(); i++)
+			{
+				stream.write_u16(removed_entities[i]);
+			}
+		}
+		removed_entities.clear();
 	}
 
 	void ReadUpdate(CBitStream@ stream)
@@ -273,6 +286,16 @@ class EntityManager
 					return; //mwahahahahahah
 				}
 				ent.ReadUpdate(stream);
+			}
+		}
+
+		u16 remove_amount;
+		if(stream.saferead_u16(remove_amount))
+		{
+			for(int i = 0; i < remove_amount; i++)
+			{
+				u16 id = stream.read_u16();
+				Remove(id);
 			}
 		}
 	}

@@ -7,11 +7,12 @@ Game@ StartGame()
 
 class TestGame : Game
 {
+	EntityManager entities;
 	Camera camera;
 	
 	TestGame()
 	{
-		super();
+		entities = EntityManager();
 		camera = Camera();
 
 		Texture::createFromFile("hiii", CFileMatcher("default.png").getFirst());
@@ -60,25 +61,42 @@ class TestGame : Game
 
 	}
 
-	/*void SendGame(CBitStream@ stream)
+	void SendGame(CBitStream@ stream)
 	{
-
+		entities.SendEntities(stream);
 	}
 
 	void CreateGame(CBitStream@ stream)
 	{
-
+		entities.CreateEntities(stream);
 	}
 
 	void SendUpdate(CBitStream@ stream)
 	{
-
+		entities.SendUpdate(stream);
 	}
 
 	void ReadUpdate(CBitStream@ stream)
 	{
+		entities.ReadUpdate(stream);
+	}
 
-	}*/
+	void PlayerJoin(CPlayer@ player)
+	{
+		Entity@ ent = Entity();
+		ent.player_netid = player.getNetworkID();
+		ent.name = player.getUsername();
+		entities.Add(ent);
+	}
+
+	void PlayerLeave(CPlayer@ player)
+	{
+		Entity@ ent = entities.getPlayerEntity(player.getNetworkID());
+		if(ent !is null)
+		{
+			entities.Remove(ent.id);
+		}
+	}
 
 	Entity@ CreateEntityFromType(u16 type)
 	{
@@ -86,7 +104,7 @@ class TestGame : Game
 	}
 }
 
-void onNewPlayerJoin(CRules@ this, CPlayer@ player) // add player entity
+/*void onNewPlayerJoin(CRules@ this, CPlayer@ player) // add player entity
 {
 	if(isServer())
 	{
@@ -109,7 +127,7 @@ void onPlayerLeave(CRules@ this, CPlayer@ player) // remove player entity
 			game.entities.Remove(ent.id);
 		}
 	}
-}
+}*/
 
 class TestEntity : Entity
 {

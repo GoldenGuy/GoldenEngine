@@ -8,7 +8,6 @@ namespace NetCommands
 		// server commands
 		s_send_game = 64,
 		s_send_game_update,
-		s_remove_entity,
 
 		// client commands
 		c_request_game,
@@ -56,21 +55,26 @@ void onCommand( CRules@ this, u8 cmd, CBitStream@ params )
 				return;
 			}
 			break;
-
-			case NetCommands::s_remove_entity:
-			{
-				if(!game_created)
-					return;
-				u16 id;
-				if (!params.saferead_u16(id)) return;
-				game.entities.Remove(id);
-				return;
-			}
-			break;
 		}
 	}
 	
 	game.ProcessCommand(cmd, params);
+}
+
+void onNewPlayerJoin(CRules@ this, CPlayer@ player) // add player entity
+{
+	if(isServer())
+	{
+		game.PlayerJoin(player);
+	}
+}
+
+void onPlayerLeave(CRules@ this, CPlayer@ player) // remove player entity
+{
+	if(isServer())
+	{
+		game.PlayerLeave(player);
+	}
 }
 
 class NetVar
