@@ -18,8 +18,8 @@ Game@ game;
 float render_delta = 0.0f;
 
 bool localhost = false;
-bool game_created = false;
-bool asked = false;
+//bool game_created = false;
+//bool asked = false;
 //const u8 MAX_ENTITIES = 255; // for test, will increase if needed
 
 void onInit(CRules@ this)
@@ -71,13 +71,13 @@ void onReload(CRules@ this) // in case you use rebuild, since onInit wont run ag
 			new_players.push_back(getPlayer(i).getNetworkID());
 		}
 		Print("[" + getGameTime() + "]" + "Game Init", PrintColor::GRN);
-		game.Init();
+		//game.Init();
 	}
-	else // if not server means not localhost too
+	/*else // if not server means not localhost too
 	{
 		Print("[" + getGameTime() + "]" + "Waiting for game...", PrintColor::GRY);
 		game_created = false;
-	}
+	}*/
 	// end game init
 
 	if(isClient()) // create new render script, at the end of everything to not cause null error cuz game not created yet 
@@ -86,13 +86,15 @@ void onReload(CRules@ this) // in case you use rebuild, since onInit wont run ag
 		int id = Render::addScript(Render::layer_background, getCurrentScriptName(), "Render", 0);
 		this.set_s32("render_id", id);
 	}
+
+	game.Init();
 }
 
 void onTick(CRules@ this)
 {
 	render_delta = 0.0f;
 
-	if(isClient() && !localhost && !asked)
+	/*if(isClient() && !localhost && !asked)
 	{
 		CPlayer@ my_player = getLocalPlayer();
 		if(my_player != null)
@@ -103,13 +105,13 @@ void onTick(CRules@ this)
 			this.SendCommand(NetCommands::c_request_game, stream, false);
 			asked = true;
 		}
-	}
+	}*/
 
 	// game tick duh
 	game.Tick();
 
 	// network update stuff
-	if(isServer() && !localhost)
+	/*if(isServer() && !localhost)
 	{
 		// send create to new ppl
 		if(new_players.size() > 0)
@@ -133,7 +135,7 @@ void onTick(CRules@ this)
 		CBitStream stream;
 		game.SendUpdate(stream);
 		this.SendCommand(NetCommands::s_send_game_update, stream, true);
-	}
+	}*/
 }
 
 void Render(int id)

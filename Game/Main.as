@@ -15,7 +15,7 @@ class TestGame : Game
 		entities = EntityManager();
 		camera = Camera();
 
-		Texture::createFromFile("hiii", CFileMatcher("default.png").getFirst());
+		Texture::createFromFile("hiii", CFileMatcher("portrait1.png").getFirst());
 	}
 
 	void Init()

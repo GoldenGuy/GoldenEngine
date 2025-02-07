@@ -1,7 +1,7 @@
 
 //const u8 GOLDENGINE_CMD = 69; // : )
 
-namespace NetCommands
+/*namespace NetCommands
 {
 	shared enum cmds
 	{
@@ -12,13 +12,13 @@ namespace NetCommands
 		// client commands
 		c_request_game,
 	}
-}
+}*/
 
 uint16[] new_players;
 
 void onCommand( CRules@ this, u8 cmd, CBitStream@ params )
 {
-	if(isServer())
+	/*if(isServer())
 	{
 		switch(cmd)
 		{
@@ -56,7 +56,7 @@ void onCommand( CRules@ this, u8 cmd, CBitStream@ params )
 			}
 			break;
 		}
-	}
+	}*/
 	
 	game.ProcessCommand(cmd, params);
 }
