@@ -104,31 +104,6 @@ class TestGame : Game
 	}
 }
 
-/*void onNewPlayerJoin(CRules@ this, CPlayer@ player) // add player entity
-{
-	if(isServer())
-	{
-		//Print("ADDING PLAYER "+player.getUsername());
-		Entity@ ent = Entity();
-		ent.player_netid = player.getNetworkID();
-		ent.name = player.getUsername();
-		game.entities.Add(ent);
-	}
-}
-
-void onPlayerLeave(CRules@ this, CPlayer@ player) // remove player entity
-{
-	if(isServer())
-	{
-		//Print("ADDING PLAYER "+player.getUsername());
-		Entity@ ent = game.entities.getPlayerEntity(player.getNetworkID());
-		if(ent !is null)
-		{
-			game.entities.Remove(ent.id);
-		}
-	}
-}*/
-
 class TestEntity : Entity
 {
 	TestEntity()
