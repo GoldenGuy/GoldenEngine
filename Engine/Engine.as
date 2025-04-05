@@ -39,8 +39,7 @@ void onInit(CRules@ this)
 
 void onReload(CRules@ this) // in case you use rebuild, since onInit wont run again
 {
-	Game@ _game = StartGame();
-	@game = @_game;
+	@game = @StartGame();
 	
 	if(isClient())
 	{

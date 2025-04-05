@@ -1,19 +1,21 @@
 
+#include "World.as"
+
 Game@ StartGame()
 {
-	TestGame game = TestGame();
-	return @game;
+	return @TestGame();
 }
 
 class TestGame : Game
 {
 	EntityManager entities;
 	Camera camera;
+	World world;
 	
 	TestGame()
 	{
-		entities = EntityManager();
-		camera = Camera();
+		//entities = EntityManager();
+		//camera = Camera();
 
 		Texture::createFromFile("hiii", CFileMatcher("portrait1.png").getFirst());
 	}
